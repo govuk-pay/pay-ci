@@ -10,6 +10,8 @@ hidden pools_to_init = new Listing<String> {}
 
 hidden concourseTeamName = "UPDATE_ME"
 
+local initialisePoolsRetryCount = 5
+
 resource_types {
   shared_resources_for_slack_notifications.slackNotificationResourceType
 }
@@ -109,6 +111,7 @@ jobs {
         params {
           ["POOLS_TO_INIT"] = pools_to_init.toList().join(",")
         }
+        attempts = initialisePoolsRetryCount
       }
       new PutStep {
         put = "lock-pool-repo"
@@ -116,11 +119,15 @@ jobs {
           ["repository"] = "lock-pool-repo"
           ["force"] = "true"
         }
+        attempts = initialisePoolsRetryCount
       }
       new InParallelStep {
         in_parallel = new Listing<Step> {
           for (pool in pools_to_init) {
-            new GetStep {get = "\(pool)-lock-config" }
+            new GetStep {
+              get = "\(pool)-lock-config"
+              attempts = initialisePoolsRetryCount
+            }
           }
         }
       }
@@ -131,6 +138,7 @@ jobs {
           params {
             ["add"] = "\(pool)-lock-config"
           }
+          attempts = initialisePoolsRetryCount
         }
       }
     }
