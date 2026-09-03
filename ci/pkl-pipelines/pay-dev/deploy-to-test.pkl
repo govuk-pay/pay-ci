@@ -849,7 +849,7 @@ local function runSmokeTestsForApp(): InParallelStep = new InParallelStep {
       runSmokeTest("run_cancel_card_payment_sandbox-test", "cancel_sandbox_test", false)
       runSmokeTest("run_use_payment_link_sandbox-test", "pymntlnk_sandbox_test", false)
       runSmokeTest("run_create_card_payment_stripe-test", "card_stripe_test", false)
-      runSmokeTest("run_create_card_payment_stripe_3ds-test", "card_stripe_3ds_test", false)
+      runSmokeTest("run_create_card_payment_stripe_3ds-test", "card_stripe_3ds_test", true)
       runSmokeTest("run_recurring_card_payment_stripe-test", "rec_card_stripe_test", false)
       runSmokeTest("run_notifications_sandbox-test", "notifcatns_sndbx_test", false)
     }
