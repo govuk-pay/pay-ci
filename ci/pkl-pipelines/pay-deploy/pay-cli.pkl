@@ -38,7 +38,7 @@ jobs {
         }
         params {
           ["BASE"] = "main"
-          ["REPO"] = "alphagov/pay-cli"
+          ["REPO"] = "govuk-pay/pay-cli"
           ["GITHUB_TOKEN"] = "((github-access-token))"
         }
       }
