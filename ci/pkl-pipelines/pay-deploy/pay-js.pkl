@@ -100,7 +100,7 @@ jobs = new {
           }
           params = new {
             ["BASE"] = "\(jsLibrary.source_branch)"
-            ["REPO"] = "alphagov/\(jsLibrary.name)"
+            ["REPO"] = "govuk-pay/\(jsLibrary.name)"
             ["GITHUB_TOKEN"] = "((github-access-token))"
           }
         }
