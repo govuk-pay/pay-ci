@@ -80,7 +80,7 @@ jobs {
           ["src"] = "cardid-git-release"
         }
         params {
-          ["REPO"] = "alphagov/pay-cardid"
+          ["REPO"] = "govuk-pay/pay-cardid"
           ["WORKFLOW"] = "ci-trigger-release.yml"
           ["GITHUB_TOKEN"] = "((github-access-token))"
         }
