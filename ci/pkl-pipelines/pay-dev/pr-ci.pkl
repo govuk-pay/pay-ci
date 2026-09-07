@@ -44,7 +44,6 @@ local groupMap = new Mapping <String, Listing<String>> {
 
 local class AppConfig {
   tests: Listing<String> = new {}
-  node_build: Boolean = false
   migrate_from: String = ""
 }
 
@@ -274,14 +273,6 @@ local function e2eJob(app: String, config: AppConfig) = new Job {
     new InParallelStep {
       in_parallel = new Listing<Step> {
         putStatus("\(app)-pull-request", "e2e tests", "pending")
-      }
-    }
-
-    when (config.node_build) {
-      new TaskStep {
-        task = "build"
-        file = "pay-ci/ci/tasks/node-build-pr.yml"
-        params = new { ["skip_tests"] = "true" }
       }
     }
 
