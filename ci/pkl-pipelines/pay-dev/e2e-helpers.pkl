@@ -45,6 +45,7 @@ resources = new {
   new PayResources.PayGitHubResource {
     name = "endtoend-zap-git-release"
     repoName = "pay-endtoend-zap"
+    orgName = "alphagov"
     source {
       branch = "main"
       tag_regex = "alpha_release-(.*)"
