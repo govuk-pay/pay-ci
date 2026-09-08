@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "resolvedDependencies": {
-    "package://pkg.pkl-lang.org/github.com/alphagov/pkl-concourse-pipeline/pkl-concourse-pipeline@0": {
+    "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0": {
       "type": "remote",
-      "uri": "projectpackage://pkg.pkl-lang.org/github.com/alphagov/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4",
+      "uri": "projectpackage://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4",
       "checksums": {
         "sha256": "90aadd58bc99ae315faadfba3d9036adb92ff0d730f4dfe84cfb5d3fb02d75c1"
       }

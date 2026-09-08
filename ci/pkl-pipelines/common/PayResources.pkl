@@ -1,8 +1,8 @@
-import "package://pkg.pkl-lang.org/github.com/alphagov/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
-import "package://pkg.pkl-lang.org/github.com/alphagov/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Resources.pkl"
+import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Resources.pkl"
 
 open class PayGitHubResource extends Resources.GitResource {
-  hidden orgName: String = "alphagov"
+  hidden orgName: String = "govuk-pay"
   hidden repoName: String
   source = new {
     uri = "https://github.com/\(orgName)/\(repoName)"
@@ -15,7 +15,7 @@ open class PayInfraGitHubResource extends Resources.GitResource {
   name = "pay-infra"
   source = new {
     branch = "master"
-    uri = "https://github.com/alphagov/pay-infra"
+    uri = "https://github.com/govuk-pay/pay-infra"
     username = "alphagov-pay-ci-concourse"
     password = "((github-access-token))"
   }
@@ -24,7 +24,7 @@ open class PayInfraGitHubResource extends Resources.GitResource {
 open class PayGitHubPullRequestResource extends Pipeline.Resource {
   type = "pull-request"
   icon = "github"
-  hidden org: String = "alphagov"
+  hidden org: String = "govuk-pay"
   hidden repo: String
   hidden paths: Listing<String>?
   source = new {

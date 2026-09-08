@@ -3,7 +3,7 @@
 # Usage:
 # jobs:
 #   validate-docker-image-is-manifest:
-#     uses: alphagov/pay-ci/.github/workflows/_validate_docker_image_is_manifest.yml@master
+#     uses: govuk-pay/pay-ci/.github/workflows/_validate_docker_image_is_manifest.yml@master
 #     with:
 #       dockerfile: "Dockerfile"
 #

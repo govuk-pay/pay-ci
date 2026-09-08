@@ -1,5 +1,5 @@
-import "package://pkg.pkl-lang.org/github.com/alphagov/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
-import "package://pkg.pkl-lang.org/github.com/alphagov/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
 
 import ".../common/PayResources.pkl"
 
@@ -99,13 +99,13 @@ pullRequestResourceType = new Pipeline.ResourceType {
   }
 }
 
-function payGithubPullRequestResource(_name: String, alphagovRepo: String): Pipeline.Resource = new {
+function payGithubPullRequestResource(_name: String, repo: String): Pipeline.Resource = new {
   name = _name
   type = "pull-request"
   icon = "github"
   source = new {
     ["disable_forks"] = true
-    ["repository"] = "alphagov/\(alphagovRepo)"
+    ["repository"] = "govuk-pay/\(repo)"
     ["access_token"] = "((github-access-token))"
   }
 }

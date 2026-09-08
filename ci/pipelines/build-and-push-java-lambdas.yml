@@ -3,7 +3,7 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-java-lambdas
+      uri: https://github.com/govuk-pay/pay-java-lambdas
       branch: main
       username: alphagov-pay-ci-concourse
       password: ((github-access-token))
@@ -11,7 +11,7 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-ci
+      uri: https://github.com/govuk-pay/pay-ci
       branch: master
       username: alphagov-pay-ci-concourse
       password: ((github-access-token))

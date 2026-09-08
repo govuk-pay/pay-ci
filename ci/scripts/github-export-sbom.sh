@@ -4,10 +4,10 @@ apk add --no-progress --no-cache git github-cli aws-cli
 mkdir -p sbom-data/
 
 DATE=$(date -I)
-OWNER="alphagov"
+OWNER="govuk-pay"
 
 # shellcheck disable=SC2046 # We specifically want to split in this case
-set -- $(printf '%s\n' $(gh search repos --archived=false --owner="alphagov" --topic="govuk-pay" --limit=99 --json=name --jq ".[] | .name"))
+set -- $(printf '%s\n' $(gh search repos --archived=false --owner="govuk-pay" --topic="govuk-pay" --limit=99 --json=name --jq ".[] | .name"))
 
 for repo do
     file=sbom-data/"${DATE}"_sbom_"${repo}".json

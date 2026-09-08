@@ -4,7 +4,7 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-ci
+      uri: https://github.com/govuk-pay/pay-ci
       branch: master
       paths:
         - ci/pipelines/grafana-annotation-resource.yml
@@ -28,7 +28,7 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/paas-grafana-annotation-resource
+      uri: https://github.com/govuk-pay/paas-grafana-annotation-resource
       tag_regex: "alpha_release-(.*)"
       username: alphagov-pay-ci-concourse
       password: ((github-access-token))
@@ -37,7 +37,7 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-ci
+      uri: https://github.com/govuk-pay/pay-ci
       branch: master
       username: alphagov-pay-ci-concourse
       password: ((github-access-token))

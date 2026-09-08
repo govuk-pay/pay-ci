@@ -15,7 +15,7 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-ci
+      uri: https://github.com/govuk-pay/pay-ci
       branch: master
       paths:
         - ci/pipelines/deploy-smoke-tests.yml
@@ -23,13 +23,13 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-ci
+      uri: https://github.com/govuk-pay/pay-ci
       branch: master
   - name: pay-infra
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-infra
+      uri: https://github.com/govuk-pay/pay-infra
       branch: master
       username: alphagov-pay-ci-concourse
       password: ((github-access-token))
@@ -37,7 +37,7 @@ resources:
     type: github-release-1-5-5
     icon: github
     source:
-      owner: alphagov
+      owner: govuk-pay
       repository: pay-smoke-tests
       access_token: ((github-access-token))
       tag_filter: ^v(.*)
