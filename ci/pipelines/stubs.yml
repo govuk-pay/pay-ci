@@ -11,7 +11,7 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-ci
+      uri: https://github.com/govuk-pay/pay-ci
       branch: master
       paths:
         - ci/pipelines/stubs.yml
@@ -20,14 +20,14 @@ resources:
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-ci
+      uri: https://github.com/govuk-pay/pay-ci
       branch: master
 
   - name: pay-infra
     type: git
     icon: github
     source:
-      uri: https://github.com/alphagov/pay-infra
+      uri: https://github.com/govuk-pay/pay-infra
       branch: master
       username: alphagov-pay-ci-concourse
       password: ((github-access-token))

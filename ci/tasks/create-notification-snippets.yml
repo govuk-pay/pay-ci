@@ -25,15 +25,15 @@ run:
       echo -n "${APP_RELEASE_NUMBER}" | tee -a snippet/app_release_number
 
       cat <<EOT >> snippet/start
-      :rocket: ${ACTION_NAME} of <https://github.com/alphagov/pay-${APP_NAME}/releases/tag/alpha_release-${APP_RELEASE_NUMBER}|${APP_NAME} ${APP_RELEASE_NUMBER}-release> on ${ENV} is beginning
+      :rocket: ${ACTION_NAME} of <https://github.com/govuk-pay/pay-${APP_NAME}/releases/tag/alpha_release-${APP_RELEASE_NUMBER}|${APP_NAME} ${APP_RELEASE_NUMBER}-release> on ${ENV} is beginning
       EOT
 
       cat <<EOT >> snippet/success
-      :green-circle: ${ACTION_NAME} of <https://github.com/alphagov/pay-${APP_NAME}/releases/tag/alpha_release-${APP_RELEASE_NUMBER}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} was successful :tada:
+      :green-circle: ${ACTION_NAME} of <https://github.com/govuk-pay/pay-${APP_NAME}/releases/tag/alpha_release-${APP_RELEASE_NUMBER}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} was successful :tada:
       EOT
 
       cat <<EOT >> snippet/failure
-      :red_circle: ${ACTION_NAME} of <https://github.com/alphagov/pay-${APP_NAME}/releases/tag/alpha_release-${APP_RELEASE_NUMBER}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} failed. Version details:
+      :red_circle: ${ACTION_NAME} of <https://github.com/govuk-pay/pay-${APP_NAME}/releases/tag/alpha_release-${APP_RELEASE_NUMBER}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} failed. Version details:
       EOT
 
       # Disable the shellcheck rule telling us this isn't an if-then-else. We know, and it's the desirable
@@ -41,7 +41,7 @@ run:
       [ -n "${NGINX_IMAGE_TAG}" ] && \
       NGINX_RELEASE_NUMBER=$(echo "${NGINX_IMAGE_TAG}" | sed "s/-[a-z]*//") && \
       echo -n "${NGINX_RELEASE_NUMBER}" | tee -a snippet/nginx_release_number && \
-      echo "- <https://github.com/alphagov/pay-nginx-proxy/releases/tag/alpha_release-${NGINX_RELEASE_NUMBER}|nginx-proxy v${NGINX_IMAGE_TAG}>" | \
+      echo "- <https://github.com/govuk-pay/pay-nginx-proxy/releases/tag/alpha_release-${NGINX_RELEASE_NUMBER}|nginx-proxy v${NGINX_IMAGE_TAG}>" | \
       tee -a snippet/failure || true
 
       # Disable the shellcheck rule telling us this isn't an if-then-else. We know, and it's the desirable
@@ -49,6 +49,6 @@ run:
       [ -n "${ADOT_IMAGE_TAG}" ] && \
       ADOT_RELEASE_NUMBER=$(echo "${ADOT_IMAGE_TAG}" | sed "s/-[a-z]*//") && \
       echo -n "${ADOT_RELEASE_NUMBER}" | tee -a snippet/adot_release_number && \
-      echo "- <https://github.com/alphagov/pay-adot/releases/tag/alpha_release-${ADOT_RELEASE_NUMBER}|adot v${ADOT_IMAGE_TAG}>" | \
+      echo "- <https://github.com/govuk-pay/pay-adot/releases/tag/alpha_release-${ADOT_RELEASE_NUMBER}|adot v${ADOT_IMAGE_TAG}>" | \
       tee -a snippet/failure || true
 

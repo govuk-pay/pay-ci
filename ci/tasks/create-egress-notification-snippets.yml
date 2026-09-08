@@ -23,13 +23,13 @@ run:
       echo -n "${APP_RELEASE_NUMBER}" | tee -a snippet/app_release_number
       
       cat <<EOT >> snippet/start
-      :rocket: ${ACTION_NAME} of <https://github.com/alphagov/pay-dockerfiles/releases/tag/${APPLICATION_IMAGE_TAG}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} is beginning
+      :rocket: ${ACTION_NAME} of <https://github.com/govuk-pay/pay-dockerfiles/releases/tag/${APPLICATION_IMAGE_TAG}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} is beginning
       EOT
 
       cat <<EOT >> snippet/success
-      :green-circle: ${ACTION_NAME} of <https://github.com/alphagov/pay-dockerfiles/releases/tag/${APPLICATION_IMAGE_TAG}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} was successful :tada:
+      :green-circle: ${ACTION_NAME} of <https://github.com/govuk-pay/pay-dockerfiles/releases/tag/${APPLICATION_IMAGE_TAG}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} was successful :tada:
       EOT
 
       cat <<EOT >> snippet/failure
-      :red_circle: ${ACTION_NAME} of <https://github.com/alphagov/pay-dockerfiles/releases/tag/${APPLICATION_IMAGE_TAG}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} failed. Version details:
+      :red_circle: ${ACTION_NAME} of <https://github.com/govuk-pay/pay-dockerfiles/releases/tag/${APPLICATION_IMAGE_TAG}|${APP_NAME} v${APPLICATION_IMAGE_TAG}> on ${ENV} failed. Version details:
       EOT

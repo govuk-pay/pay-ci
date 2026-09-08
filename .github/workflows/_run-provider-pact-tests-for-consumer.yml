@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
-          repository: alphagov/pay-${{ inputs.provider }}
+          repository: govuk-pay/pay-${{ inputs.provider }}
           path: pay-${{ inputs.provider }}
       - name: Get Provider SHA
         id: get-provider-sha
