@@ -1,0 +1,23 @@
+name: Github Actions - Generate java transitive dependency graph
+
+on:
+  workflow_call:
+    inputs:
+      directory:
+        type: string
+        required: false
+        default: .
+        description: Set to the directory where the `pom.xml` file is. Defaults to "."
+
+jobs:
+  generate-dependency-graph:
+    name: Generate transitive dependency graph
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+      - name: Submit Dependency Snapshot
+        uses: advanced-security/maven-dependency-submission-action@a64327a7329c9939cf675e458452febe1894a70c
+        with:
+          directory: ${{ inputs.directory }}
+          maven-args: -Dscopes=compile,provided,runtime,system
