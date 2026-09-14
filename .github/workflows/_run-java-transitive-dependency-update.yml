@@ -8,6 +8,11 @@ on:
         required: false
         default: .
         description: Set to the directory where the `pom.xml` file is. Defaults to "."
+      java_version:
+        type: string
+        required: false
+        default: 25
+        description: JDK version to setup and run tests. Defaults to 25
 
 jobs:
   generate-dependency-graph:
@@ -15,7 +20,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+      - name: Set up JDK ${{ inputs.java_version }}
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          java-version: ${{ inputs.java_version }}
+          distribution: 'temurin'
       - name: Submit Dependency Snapshot
         uses: advanced-security/maven-dependency-submission-action@a64327a7329c9939cf675e458452febe1894a70c
         with:
