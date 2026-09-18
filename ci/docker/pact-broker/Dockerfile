@@ -1,1 +1,1 @@
-FROM pactfoundation/pact-broker:2@sha256:e83108a9636b04742d790acb58fb1aece328b6419e96b45b0cd154b1509702bc
+FROM pactfoundation/pact-broker:3@sha256:420341d4fbfb00a621c313f47e530ad75703f969bbc7520d0d72bc71bb53cef9
