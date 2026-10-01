@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "@slack/web-api": "^7.2.0",
-    "axios": "^1.18.1",
+    "axios": "^1.20.0",
     "js-yaml": "^4.3.2",
     "moment-timezone": "^0.5.45"
   }
