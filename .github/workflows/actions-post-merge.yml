@@ -14,4 +14,4 @@ jobs:
       contents: write
     uses: govuk-pay/pay-ci/.github/workflows/_create-alpha-release-tag.yml@8597f9957716cb928c22ed66ee0704a24798ce6e
     with:
-      tag-prefix: "actions"
+      tag_prefix: "actions_"
