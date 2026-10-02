@@ -10,8 +10,37 @@ on:
 
 jobs:
   tag-release:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    uses: govuk-pay/pay-ci/.github/workflows/_create-alpha-release-tag.yml@8597f9957716cb928c22ed66ee0704a24798ce6e
-    with:
-      tag_prefix: "actions_"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: "0"
+      - name: Get current release version
+        id: get-current-release-version
+        run: |
+          tag=$(git describe --no-abbrev --tags --match "[0-9]*.[0-9]*.[0-9]*" || true)
+          if [[ -z "${tag}" ]]; then
+            version="0.0.0"
+          else
+            version=$tag
+          fi
+
+          echo "latest-version=$version" >> $GITHUB_OUTPUT
+      - name: Get next actions tag version
+        id: next-version
+        uses: govuk-pay/pay-ci/actions/next-semver@d4f534a8316931ea45b2c3369c7dac22f3a3a6e8
+        with:
+          package_version: "0.0.0"
+          release_version: ${{ steps.get-current-release-version.outputs.latest-version }}
+      - name: Tag current actions head
+        run: |
+          TAG_NAME=$${{ steps.next-version.outputs.version }}
+          echo "TAG_NAME: ${TAG_NAME}"
+          git config user.email payments-team@digital.cabinet-office.gov.uk
+          git config user.name pay-github-actions
+          DATE=$(date +%Y-%m-%d:%H:%M:%S)
+          git tag -a ${TAG_NAME} ${GITHUB_SHA} -m "Release tag created on ${DATE}"
+          git push origin --tags
