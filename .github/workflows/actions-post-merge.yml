@@ -37,7 +37,7 @@ jobs:
           release_version: ${{ steps.get-current-release-version.outputs.latest-version }}
       - name: Tag current actions head
         run: |
-          TAG_NAME=$${{ steps.next-version.outputs.version }}
+          TAG_NAME=${{ steps.next-version.outputs.version }}
           echo "TAG_NAME: ${TAG_NAME}"
           git config user.email payments-team@digital.cabinet-office.gov.uk
           git config user.name pay-github-actions
