@@ -7,26 +7,26 @@ updates:
     interval: daily
     time: "03:00"
   ignore:
-  - dependency-name: "node"
-    versions:
-    - ">= 23"
+    - dependency-name: "node"
+      versions:
+        - ">= 23"
   open-pull-requests-limit: 10
   labels:
-  - dependencies
-  - govuk-pay
-  - docker
+    - dependencies
+    - govuk-pay
+    - docker
 - package-ecosystem: docker
   directory: "/ci/docker/concourse-runner"
   schedule:
     interval: daily
     time: "03:00"
   ignore:
-  - dependency-name: "docker"
+    - dependency-name: "docker"
   open-pull-requests-limit: 10
   labels:
-  - dependencies
-  - govuk-pay
-  - docker
+    - dependencies
+    - govuk-pay
+    - docker
 - package-ecosystem: docker
   directory: "/ci/docker/pact-broker"
   schedule:
@@ -34,9 +34,9 @@ updates:
     time: "03:00"
   open-pull-requests-limit: 10
   labels:
-  - dependencies
-  - govuk-pay
-  - docker
+    - dependencies
+    - govuk-pay
+    - docker
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
@@ -44,15 +44,14 @@ updates:
     time: "03:00"
   open-pull-requests-limit: 0
   labels:
-  - dependencies
-  - govuk-pay
-  - github_actions
+    - dependencies
+    - govuk-pay
+    - github_actions
 - package-ecosystem: github-actions
   directory: /.github/workflows
   schedule:
     interval: daily
-    time: 03:00
+    time: "03:00"
   open-pull-requests-limit: 3
-  cooldown: 3
   allow:
-  - dependency-name: govuk-pay/pay-ci/*
+    - dependency-name: govuk-pay/pay-ci/*
