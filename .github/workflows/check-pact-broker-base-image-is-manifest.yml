@@ -10,6 +10,6 @@ permissions:
 
 jobs:
   check-docker-base-images-are-manifests:
-    uses: govuk-pay/pay-ci/.github/workflows/_validate_docker_image_is_manifest.yml@9c119b67b8c05cf03d3a08be6dfac4836f804e1f
+    uses: govuk-pay/pay-ci/.github/workflows/_validate_docker_image_is_manifest.yml@042a7e3d823df3b1ba6cbab336f97c07e65dc4e9
     with:
       dockerfile: ./ci/docker/pact-broker/Dockerfile
