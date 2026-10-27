@@ -7,6 +7,7 @@ image_resource:
 params:
   BASE:
   REPO:
+  GITHUB_USERNAME: alphagov-pay-ci-concourse
   GITHUB_TOKEN:
 inputs:
   - name: src
@@ -17,18 +18,18 @@ run:
     - -c
     - |
       apk add --no-cache git github-cli
-      
+
       git remote remove origin
-      git remote add origin "https://$GITHUB_TOKEN@github.com/$REPO"
+      git remote add origin "https://${GITHUB_USERNAME}:$GITHUB_TOKEN@github.com/$REPO"
       git config --local user.email "github-pay-ci+concourse@digital.cabinet-office.gov.uk"
-      git config --local user.name "alphagov-pay-ci-concourse"
-      
+      git config --local user.name "${GITHUB_USERNAME}"
+
       npm ci
       RELEASE_VERSION="$(npm version patch --no-git-tag-version)"
       git add package.json package-lock.json
       git commit -m "[automated release] $RELEASE_VERSION"
-      
+
       git checkout -b "release-$RELEASE_VERSION"
       git push --set-upstream origin "release-$RELEASE_VERSION"
-      
+
       gh pr create --base "$BASE" --title "[automated release] $RELEASE_VERSION" --body "🤖 automated PR, merge to trigger release"
