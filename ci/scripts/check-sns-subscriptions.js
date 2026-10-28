@@ -99,7 +99,7 @@ function validateSubscriptionGeneric (topicArn, endpoint) {
 async function validateSubscriptions (subscriptions) {
   for (const subscription of subscriptions) {
     const endpoint = subscription.Endpoint.trim()
-    if (subscription.Protocol === 'email' || subscription.Protocol === 'sqs') {
+    if (subscription.Protocol === 'email' || subscription.Protocol === 'sqs' || subscription.Protocol === 'lambda') {
       validateSubscriptionGeneric(subscription.TopicArn, endpoint)
     } else if (subscription.Protocol === 'https') {
       await validateSubscriptionHttps(subscription.TopicArn, endpoint)
