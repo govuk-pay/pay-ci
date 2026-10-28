@@ -32,7 +32,7 @@ jobs:
           echo "latest-version=$version" >> $GITHUB_OUTPUT
       - name: Get next actions tag version
         id: next-version
-        uses: govuk-pay/pay-ci/actions/next-semver@67c10bdec6dad03624cee4ab798578e1ea429b97
+        uses: govuk-pay/pay-ci/actions/next-semver@2f600380181d780f79bc92c3f648a23c6f2ab17d # 0.0.2
         with:
           package_version: "0.0.0"
           release_version: ${{ steps.get-current-release-version.outputs.latest-version }}
