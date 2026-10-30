@@ -6,6 +6,7 @@ import
 import "PayResources.pkl"
 import "shared_resources.pkl"
 import "shared_resources_for_deploy_pipelines.pkl"
+import "../common/shared_resources_for_slack_notifications.pkl"
 import "shared_resources_for_terraform.pkl"
 
 const commonTerraformParams = new Mixin {
@@ -16,6 +17,13 @@ const commonTerraformParams = new Mixin {
     ["GITHUB_APP_PEM_FILE"] = "((github-app-pem))"
   }
 }
+
+const failureNotification = shared_resources_for_slack_notifications.paySlackNotification(
+  new shared_resources_for_slack_notifications.SlackNotificationConfig{
+    message = "Failed to apply github terraform for $BUILD_JOB_NAME."
+    slack_channel_for_failure = "#govuk-pay-owl"
+  }
+)
 
 configurationGitHubResource: PayResources.PayGitHubResource = new {
   name = "configuration"
