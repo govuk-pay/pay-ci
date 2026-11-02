@@ -107,7 +107,7 @@ jobs = new {
       ...sharedSteps("configuration-pr")
       shared_resources_for_github_management.terraformPlan("configuration-pr", terraform_subpath)
         |> shared_mixin
-      shared_resources_for_github_management.putPRPlanSuccessStatus
+      shared_resources_for_github_management.putPRPlanSuccessStatus("configuration-plan-user")
     }
     on_failure = shared_resources.putPRTestFailedStatus("configuration-pr", "configuration-plan")
     on_error = shared_resources.putPRTestFailedStatus("configuration-pr", "configuration-plan")
