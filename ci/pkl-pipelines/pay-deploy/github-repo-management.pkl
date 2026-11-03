@@ -78,6 +78,5 @@ jobs = new {
     }
     on_failure = shared_resources_for_github_management.failureNotification
     on_error = shared_resources_for_github_management.failureNotification
-    on_success = shared_resources_for_github_management.failureNotification
   }
 }
