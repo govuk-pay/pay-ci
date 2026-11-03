@@ -150,8 +150,8 @@ function terraformApply(configuration_path: String, terraform_subpath: String) =
   }
 } |> commonTerraformParams
 
-putPRPlanSuccessStatus: Pipeline.PutStep = new {
-  put = "configuration-pr"
+function putPRPlanSuccessStatus(context: String) = new Pipeline.PutStep {
+    put = "configuration-pr"
   get_params {
     ["skip_download"] = true
   }
@@ -160,6 +160,6 @@ putPRPlanSuccessStatus: Pipeline.PutStep = new {
     ["comment_file"] = "plan/output"
     ["delete_previous_comments"] = true
     ["status"] = "success"
-    ["context"] = "configuration-plan"
+    ["context"] = context
   }
 }
