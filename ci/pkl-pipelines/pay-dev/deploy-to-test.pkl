@@ -851,6 +851,7 @@ local function runSmokeTestsForApp(): InParallelStep = new InParallelStep {
       runSmokeTest("run_create_card_payment_stripe-test", "card_stripe_test", false)
       runSmokeTest("run_create_card_payment_stripe_3ds-test", "card_stripe_3ds_test", true)
       runSmokeTest("run_recurring_card_payment_stripe-test", "rec_card_stripe_test", false)
+      runSmokeTest("run_recurring_card_payment_adyen-test", "rec_card_adyen_test", false)
       runSmokeTest("run_notifications_sandbox-test", "notifcatns_sndbx_test", false)
     }
   }
