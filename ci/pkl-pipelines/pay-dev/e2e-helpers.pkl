@@ -144,7 +144,7 @@ jobs = new {
       shared_resources.generateDockerCredsConfigStep
       new shared_resources.ParseGithubAlphaReleaseTagTask { gitRelease = "endtoend-git-release" }
       shared_test.loadVar("release_number_tag", "tags/release-number")
-      buildImage("build-endtoend-image", "endtoend-git-release")
+      shared_resources.buildImage("build-endtoend-image", "endtoend-git-release")
       putCandidateImage("endtoend-candidate-ecr-registry-test")
     }
 
@@ -170,7 +170,7 @@ jobs = new {
       shared_resources.generateDockerCredsConfigStep
       new shared_resources.ParseGithubAlphaReleaseTagTask { gitRelease = "endtoend-zap-git-release" }
       shared_test.loadVar("release_number_tag", "tags/release-number")
-      buildImage("build-endtoend-zap-image", "endtoend-zap-git-release")
+      shared_resources.buildImage("build-endtoend-zap-image", "endtoend-zap-git-release")
       putCandidateImage("endtoend-zap-candidate-ecr-registry-test")
     }
 
@@ -315,30 +315,6 @@ jobs = new {
 }
 
 // THINGS BELOW HERE MAY BE USEFUL IN SHARED_RESOURCES
-
-local function buildImage(taskName: String, context: String): TaskStep = new {
-  task = taskName
-  privileged = true
-  params {
-    ["CONTEXT"] = context
-    ["DOCKER_CONFIG"] = "docker_creds"
-  }
-  config {
-    platform = "linux"
-    image_resource {
-      type = "registry-image"
-      source { ["repository"] = "concourse/oci-build-task" }
-    }
-    inputs = new Listing {
-      new TaskConfig.Input { name = context }
-      new TaskConfig.Input { name = "docker_creds" }
-    }
-    outputs = new Listing {
-      new TaskConfig.Output { name = "image" }
-    }
-    run { path = "build" }
-  }
-}
 
 local function putCandidateImage(putName: String): PutStep =
   putStep(putName, "image/image.tar", "tags/candidate-tag", true)
