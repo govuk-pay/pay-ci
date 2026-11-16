@@ -1,20 +1,21 @@
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
-import "./shared_resources.pkl"
 import "./PayResources.pkl"
+import "./shared_resources.pkl"
 
-function PayPipelineSelfUpdateResource(pkl_pipeline_file: String, _branch: String) =
-  new PayResources.PayGitHubResource {
-    name = "pipeline-source"
-    repoName = "pay-ci"
-    source {
-      branch = _branch
-      paths = new {
-        "ci/pkl-pipelines/\(pkl_pipeline_file)"
-        "ci/pkl-pipelines/common/**"
-      }
+function PayPipelineSelfUpdateResource(pkl_pipeline_file: String, _branch: String) = new PayResources
+  .PayGitHubResource {
+  name = "pipeline-source"
+  repoName = "pay-ci"
+  source {
+    branch = _branch
+    paths = new {
+      "ci/pkl-pipelines/\(pkl_pipeline_file)"
+      "ci/pkl-pipelines/common/**"
     }
   }
+}
 
 payPipelineSelfUpdateGroup: Pipeline.Group = new {
   name = "update-pipeline"
@@ -25,10 +26,11 @@ payPipelineSelfUpdateGroup: Pipeline.Group = new {
 
 function PayPipelineSelfUpdateJob(pkl_pipeline_file: String): Pipeline.Job = new {
   local yml_pipeline_file = pkl_pipeline_file.replaceLast(".pkl", ".yaml")
-  local pipeline_name = pkl_pipeline_file.
-    replaceLast(".pkl", "").
-    replaceLast("pay-deploy/", "").
-    replaceLast("pay-dev/", "")
+  local pipeline_name =
+    pkl_pipeline_file
+      .replaceLast(".pkl", "")
+      .replaceLast("pay-deploy/", "")
+      .replaceLast("pay-dev/", "")
   local concourse_team = pkl_pipeline_file.split("/")[0]
 
   name = "update-pipeline"

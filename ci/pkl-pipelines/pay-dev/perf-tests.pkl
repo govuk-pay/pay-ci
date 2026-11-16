@@ -1,11 +1,14 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
 import "../common/shared_resources_for_test_pipelines.pkl" as shared_test
 import "../common/shared_resources_for_times.pkl" as shared_times
-import "../common/PayResources.pkl"
 
 local databases = new Mapping<String, String> {
   ["adminusers"] = "test-perf-1-adminusers-rds-0"
@@ -47,41 +50,41 @@ resources = new {
   shared_resources.payECRResource(
     "pull-request-builds-ecr",
     "govukpay/pull-request-builds",
-    "pay_aws_test_account_id"
+    "pay_aws_test_account_id",
   ) |> withTag("latest")
 
   shared_resources.payECRResource(
     "perf-tests-ecr-registry-test",
     "govukpay/perftests",
-    "pay_aws_test_account_id"
+    "pay_aws_test_account_id",
   ) |> withTag("latest")
-
 
   shared_resources.payECRResourceWithVariant(
     "perf-tests-ecr-release",
     "govukpay/perftests",
     "pay_aws_test_account_id",
-    "release"
+    "release",
   )
 
   shared_resources.payDockerHubResource(
     "perf-tests-dockerhub",
     "governmentdigitalservice/pay-perftests",
-    "latest-master"
+    "latest-master",
   )
-
 
   shared_times.payDailyTimeResource("every-night-at-11pm", "23:00", "23:30")
   shared_times.payWeeklyTimeResource(
     "every-sunday-at-0315",
-    "03:15", "03:25",
-    "Sunday"
+    "03:15",
+    "03:25",
+    "Sunday",
   ) |> shared_times.withLocation("UTC")
 
   shared_times.payWeeklyTimeResource(
     "every-sunday-at-0450",
-    "04:50", "05:00",
-    "Sunday"
+    "04:50",
+    "05:00",
+    "Sunday",
   ) |> shared_times.withLocation("UTC")
 }
 
@@ -185,7 +188,13 @@ jobs = new {
           }
         }
       }
-      (assumeRoleTask("test", "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1", "perf-tests-test-assume-role")) {
+      (
+        assumeRoleTask(
+          "test",
+          "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1",
+          "perf-tests-test-assume-role",
+        )
+      ) {
         params {
           ["AWS_ROLE_DURATION"] = "18600"
         }
@@ -195,8 +204,16 @@ jobs = new {
           steps {
             shared_test.loadAssumeRoleVar
             shared_test.loadVar("release-tag", "perf-tests-ecr-release/tag")
-            shared_test.loadVarJson("gatling-simulation-settings", "perf-tests-git-release/ci/gatling-simulation-settings.json")
-            (shared_test.loadVar("service-volumes", "perf-tests-git-release/ci/scale-service-volumes.yml")) {
+            shared_test.loadVarJson(
+              "gatling-simulation-settings",
+              "perf-tests-git-release/ci/gatling-simulation-settings.json",
+            )
+            (
+              shared_test.loadVar(
+                "service-volumes",
+                "perf-tests-git-release/ci/scale-service-volumes.yml",
+              )
+            ) {
               format = "yml"
             }
           }
@@ -352,7 +369,8 @@ jobs = new {
       params {
         ["channel"] = "#govuk-pay-announce"
         ["silent"] = true
-        ["text"] = ":red-circle: Failed to build and push pay-perftests image - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+        ["text"] =
+          ":red-circle: Failed to build and push pay-perftests image - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
         ["icon_emoji"] = ":concourse:"
         ["username"] = "pay-concourse"
       }
@@ -363,7 +381,8 @@ jobs = new {
       params {
         ["channel"] = "#govuk-pay-activity"
         ["silent"] = true
-        ["text"] = ":green-circle: Built and pushed pay-perftests image - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+        ["text"] =
+          ":green-circle: Built and pushed pay-perftests image - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
         ["icon_emoji"] = ":concourse:"
         ["username"] = "pay-concourse"
       }
@@ -385,7 +404,13 @@ jobs = new {
         in_parallel = new InParallelConfig {
           steps {
             buildPerfTestsImage("pay-perftests-pr", false)
-            (assumeRoleTask("test", "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1", "perf-tests-test-assume-role")) {
+            (
+              assumeRoleTask(
+                "test",
+                "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1",
+                "perf-tests-test-assume-role",
+              )
+            ) {
               params {
                 ["AWS_ROLE_DURATION"] = "18600"
               }
@@ -408,7 +433,10 @@ jobs = new {
           steps {
             shared_test.loadVar("image_filename", "image_info/image_filename")
             shared_test.loadVar("image_tag", "image_info/tag")
-            shared_test.loadVarJson("gatling-simulation-settings", "pay-perftests-pr/ci/gatling-simulation-settings.json")
+            shared_test.loadVarJson(
+              "gatling-simulation-settings",
+              "pay-perftests-pr/ci/gatling-simulation-settings.json",
+            )
             shared_test.loadAssumeRoleVar
           }
         }
@@ -490,7 +518,13 @@ local serviceScalingSetup = new Listing<Step> {
       }
     }
   }
-  (assumeRoleTask("test", "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1", "perf-tests-test-assume-role")) {
+  (
+    assumeRoleTask(
+      "test",
+      "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1",
+      "perf-tests-test-assume-role",
+    )
+  ) {
     params {
       ["AWS_ROLE_DURATION"] = "18600"
     }
@@ -499,7 +533,12 @@ local serviceScalingSetup = new Listing<Step> {
     in_parallel = new InParallelConfig {
       steps {
         shared_test.loadAssumeRoleVar
-        (shared_test.loadVar("service-volumes", "perf-tests-git-release/ci/scale-service-volumes.yml")) {
+        (
+          shared_test.loadVar(
+            "service-volumes",
+            "perf-tests-git-release/ci/scale-service-volumes.yml",
+          )
+        ) {
           format = "yml"
         }
       }
@@ -519,7 +558,13 @@ local function timedDbScalingSetup(timeTrigger: String): Listing<Step> = new {
       }
     }
   }
-  (assumeRoleTask("test", "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1", "perf-tests-test-assume-role")) {
+  (
+    assumeRoleTask(
+      "test",
+      "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1",
+      "perf-tests-test-assume-role",
+    )
+  ) {
     params {
       ["AWS_ROLE_DURATION"] = "18600"
     }
@@ -538,7 +583,8 @@ local paymentSimulationPerfTest = new TryStep {
     task = "payment-simulation-perf-test"
     file = "pay-ci/ci/tasks/run-codebuild.yml"
     params {
-      ["PATH_TO_CONFIG"] = "../../../../run-codebuild-configuration/perf-tests-PaymentSimulation.json"
+      ["PATH_TO_CONFIG"] =
+        "../../../../run-codebuild-configuration/perf-tests-PaymentSimulation.json"
       ["AWS_ACCESS_KEY_ID"] = "((.:role.AWS_ACCESS_KEY_ID))"
       ["AWS_SECRET_ACCESS_KEY"] = "((.:role.AWS_SECRET_ACCESS_KEY))"
       ["AWS_SESSION_TOKEN"] = "((.:role.AWS_SESSION_TOKEN))"
@@ -552,7 +598,8 @@ local searchPaymentsSimulationPerfTest = new TryStep {
     task = "search-payments-simulation-perf-test"
     file = "pay-ci/ci/tasks/run-codebuild.yml"
     params {
-      ["PATH_TO_CONFIG"] = "../../../../run-codebuild-configuration/perf-tests-SearchPaymentsSimulation.json"
+      ["PATH_TO_CONFIG"] =
+        "../../../../run-codebuild-configuration/perf-tests-SearchPaymentsSimulation.json"
       ["AWS_ACCESS_KEY_ID"] = "((.:role.AWS_ACCESS_KEY_ID))"
       ["AWS_SECRET_ACCESS_KEY"] = "((.:role.AWS_SECRET_ACCESS_KEY))"
       ["AWS_SESSION_TOKEN"] = "((.:role.AWS_SESSION_TOKEN))"
@@ -566,7 +613,8 @@ local selfServiceSimulationPerfTest = new TryStep {
     task = "self-service-simulation-perf-test"
     file = "pay-ci/ci/tasks/run-codebuild.yml"
     params {
-      ["PATH_TO_CONFIG"] = "../../../../run-codebuild-configuration/perf-tests-SelfServiceSimulation.json"
+      ["PATH_TO_CONFIG"] =
+        "../../../../run-codebuild-configuration/perf-tests-SelfServiceSimulation.json"
       ["AWS_ACCESS_KEY_ID"] = "((.:role.AWS_ACCESS_KEY_ID))"
       ["AWS_SECRET_ACCESS_KEY"] = "((.:role.AWS_SECRET_ACCESS_KEY))"
       ["AWS_SESSION_TOKEN"] = "((.:role.AWS_SESSION_TOKEN))"
@@ -648,7 +696,11 @@ local scaleUpServices = new InParallelStep {
       }
       new DoStep {
         do {
-          assumeRoleTask("deploy", "pay-concourse-stubs-deploy-tooling", "terraform-deploy-assume-role")
+          assumeRoleTask(
+            "deploy",
+            "pay-concourse-stubs-deploy-tooling",
+            "terraform-deploy-assume-role",
+          )
           shared_test.loadVar("deploy-role-stubs", "assume-role/assume-role.json")
           scaleStubs("up", "deploy-role-stubs")
         }
@@ -672,7 +724,11 @@ local scaleDownServices = new InParallelStep {
     steps {
       new DoStep {
         do {
-          assumeRoleTask("deploy", "pay-concourse-stubs-deploy-tooling", "terraform-deploy-assume-role")
+          assumeRoleTask(
+            "deploy",
+            "pay-concourse-stubs-deploy-tooling",
+            "terraform-deploy-assume-role",
+          )
           shared_test.loadVar("deploy-role", "assume-role/assume-role.json")
           scaleStubs("down", "deploy-role")
         }
@@ -735,11 +791,12 @@ local function perfTestFailedNotification(perfTestName: String): PutStep = new {
   put = "slack-notification"
   attempts = 10
   params {
-      ["channel"] = "#govuk-pay-announce"
-      ["silent"] = true
-      ["text"] = ":red-circle: Performance test \(perfTestName) failed - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
-      ["icon_emoji"] = ":concourse:"
-      ["username"] = "pay-concourse"
+    ["channel"] = "#govuk-pay-announce"
+    ["silent"] = true
+    ["text"] =
+      ":red-circle: Performance test \(perfTestName) failed - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+    ["icon_emoji"] = ":concourse:"
+    ["username"] = "pay-concourse"
   }
 }
 
@@ -749,7 +806,8 @@ local function perfTestPassedNotification(perfTestName: String): PutStep = new {
   params {
     ["channel"] = "#govuk-pay-activity"
     ["silent"] = true
-    ["text"] = ":green-circle: Individual performance test execution of \(perfTestName) completed - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+    ["text"] =
+      ":green-circle: Individual performance test execution of \(perfTestName) completed - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
     ["icon_emoji"] = ":concourse:"
     ["username"] = "pay-concourse"
   }
@@ -763,7 +821,8 @@ local function perfTestExecutionErrorNotification(): PutStep = new {
     // those tests is failing (as opposed to bad results from the performance test itself)
     ["channel"] = "#govuk-pay-owl"
     ["silent"] = true
-    ["text"] = ":red-circle: Failed to execute performance test - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+    ["text"] =
+      ":red-circle: Failed to execute performance test - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
     ["icon_emoji"] = ":concourse:"
     ["username"] = "pay-concourse"
   }
@@ -775,7 +834,8 @@ local function perfTestIndividualExecutionErrorNotification(perfTestName: String
   params {
     ["channel"] = "#govuk-pay-announce"
     ["silent"] = true
-    ["text"] = ":red-circle: Failed to execute individual performance test \(perfTestName) - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+    ["text"] =
+      ":red-circle: Failed to execute individual performance test \(perfTestName) - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
     ["icon_emoji"] = ":concourse:"
     ["username"] = "pay-concourse"
   }
@@ -789,7 +849,8 @@ local function perfTestExecutionSuccessNotification(): PutStep = new {
     // those tests is failing (as opposed to bad results from the performance test itself)
     ["channel"] = "#govuk-pay-activity"
     ["silent"] = true
-    ["text"] = ":green-circle: Performance test execution completed - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+    ["text"] =
+      ":green-circle: Performance test execution completed - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
     ["icon_emoji"] = ":concourse:"
     ["username"] = "pay-concourse"
   }
@@ -815,7 +876,11 @@ local standardSearchPaymentSimulationPerfTestJob: Job = runSearchPaymentSimulati
 local extendedSearchPaymentSimulationPerfTestJob: Job = runSearchPaymentSimulationPerfTest(true)
 
 local function runSearchPaymentSimulationPerfTest(extended: Boolean): Job = new {
-  name = if (extended) "run-extended-search-payment-simulation-perf-test" else "run-search-payment-simulation-perf-test"
+  name =
+    if (extended)
+      "run-extended-search-payment-simulation-perf-test"
+    else
+      "run-search-payment-simulation-perf-test"
   serial = true
   serial_groups { "perf-tests" }
   plan {
@@ -828,7 +893,13 @@ local function runSearchPaymentSimulationPerfTest(extended: Boolean): Job = new 
         }
       }
     }
-    (assumeRoleTask("test", "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1", "perf-tests-test-assume-role")) {
+    (
+      assumeRoleTask(
+        "test",
+        "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1",
+        "perf-tests-test-assume-role",
+      )
+    ) {
       params {
         ["AWS_ROLE_DURATION"] = if (extended) "7200" else "3600"
       }
@@ -840,7 +911,10 @@ local function runSearchPaymentSimulationPerfTest(extended: Boolean): Job = new 
           shared_test.loadVar("release-tag", "perf-tests-ecr-release/tag")
           shared_test.loadVarJson(
             "gatling-simulation-settings",
-            if (extended) "perf-tests-git-release/ci/gatling-extended-simulation-settings.json" else "perf-tests-git-release/ci/gatling-simulation-settings.json"
+            if (extended)
+              "perf-tests-git-release/ci/gatling-extended-simulation-settings.json"
+            else
+              "perf-tests-git-release/ci/gatling-simulation-settings.json",
           )
         }
       }
@@ -856,7 +930,11 @@ local standardPaymentSimulationPerfTestJob: Job = runPaymentSimulationPerfTest(f
 local extendedPaymentSimulationPerfTestJob: Job = runPaymentSimulationPerfTest(true)
 
 local function runPaymentSimulationPerfTest(extended: Boolean): Job = new {
-  name = if (extended) "run-extended-payment-simulation-perf-test" else "run-payment-simulation-perf-test"
+  name =
+    if (extended)
+      "run-extended-payment-simulation-perf-test"
+    else
+      "run-payment-simulation-perf-test"
   serial = true
   serial_groups { "perf-tests" }
   plan {
@@ -874,7 +952,13 @@ local function runPaymentSimulationPerfTest(extended: Boolean): Job = new {
         ...cleanup_perf_test_1_plan
       }
     }
-    (assumeRoleTask("test", "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1", "perf-tests-test-assume-role")) {
+    (
+      assumeRoleTask(
+        "test",
+        "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1",
+        "perf-tests-test-assume-role",
+      )
+    ) {
       params {
         ["AWS_ROLE_DURATION"] = if (extended) "7200" else "3600"
       }
@@ -886,7 +970,10 @@ local function runPaymentSimulationPerfTest(extended: Boolean): Job = new {
           shared_test.loadVar("release-tag", "perf-tests-ecr-release/tag")
           shared_test.loadVarJson(
             "gatling-simulation-settings",
-            if (extended) "perf-tests-git-release/ci/gatling-extended-simulation-settings.json" else "perf-tests-git-release/ci/gatling-simulation-settings.json"
+            if (extended)
+              "perf-tests-git-release/ci/gatling-extended-simulation-settings.json"
+            else
+              "perf-tests-git-release/ci/gatling-simulation-settings.json",
           )
         }
       }
@@ -902,7 +989,11 @@ local standardSelfServiceSimulationPerfTestJob: Job = runSelfServiceSimulationPe
 local extendedSelfServiceSimulationPerfTestJob: Job = runSelfServiceSimulationPerfTest(true)
 
 local function runSelfServiceSimulationPerfTest(extended: Boolean): Job = new {
-  name = if (extended) "run-extended-self-service-simulation-perf-test" else "run-self-service-simulation-perf-test"
+  name =
+    if (extended)
+      "run-extended-self-service-simulation-perf-test"
+    else
+      "run-self-service-simulation-perf-test"
   serial = true
   serial_groups { "perf-tests" }
   plan {
@@ -915,7 +1006,13 @@ local function runSelfServiceSimulationPerfTest(extended: Boolean): Job = new {
         }
       }
     }
-    (assumeRoleTask("test", "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1", "perf-tests-test-assume-role")) {
+    (
+      assumeRoleTask(
+        "test",
+        "pay-cd-pay-dev-codebuild-executor-perf-tests-test-perf-1",
+        "perf-tests-test-assume-role",
+      )
+    ) {
       params {
         ["AWS_ROLE_DURATION"] = if (extended) "7200" else "3600"
       }
@@ -927,7 +1024,10 @@ local function runSelfServiceSimulationPerfTest(extended: Boolean): Job = new {
           shared_test.loadVar("release-tag", "perf-tests-ecr-release/tag")
           shared_test.loadVarJson(
             "gatling-simulation-settings",
-            if (extended) "perf-tests-git-release/ci/gatling-extended-simulation-settings.json" else "perf-tests-git-release/ci/gatling-simulation-settings.json"
+            if (extended)
+              "perf-tests-git-release/ci/gatling-extended-simulation-settings.json"
+            else
+              "perf-tests-git-release/ci/gatling-simulation-settings.json",
           )
         }
       }

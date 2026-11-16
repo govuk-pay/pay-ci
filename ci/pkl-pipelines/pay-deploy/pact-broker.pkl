@@ -1,14 +1,17 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
 
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
 import "../common/shared_resources_for_slack_notifications.pkl"
 import "../common/shared_resources_for_terraform.pkl"
-import "../common/PayResources.pkl"
 
-local typealias SlackNotificationConfig = shared_resources_for_slack_notifications.SlackNotificationConfig
+local typealias SlackNotificationConfig =
+  shared_resources_for_slack_notifications.SlackNotificationConfig
 
 resource_types {
   shared_resources.slackNotificationResourceType
@@ -18,8 +21,12 @@ resources {
   pipeline_self_update.PayPipelineSelfUpdateResource("pay-deploy/pact-broker.pkl", "master")
   shared_resources.payCiGitHubResource
   new PayResources.PayInfraGitHubResource {}
-  shared_resources.payECRResourceWithVariant("pact-broker-ecr-registry-deploy",
-    "govukpay/pact-broker", "pay_aws_deploy_account_id", "release")
+  shared_resources.payECRResourceWithVariant(
+    "pact-broker-ecr-registry-deploy",
+    "govukpay/pact-broker",
+    "pay_aws_deploy_account_id",
+    "release",
+  )
   shared_resources.slackNotificationResource
 }
 
@@ -37,13 +44,16 @@ jobs {
         task = "assume-role"
         file = "pay-ci/ci/tasks/assume-role.yml"
         params {
-          ["AWS_ROLE_ARN"] = "arn:aws:iam::((pay_aws_deploy_account_id)):role/pay-concourse-pact-broker-deploy-tooling"
+          ["AWS_ROLE_ARN"] =
+            "arn:aws:iam::((pay_aws_deploy_account_id)):role/pay-concourse-pact-broker-deploy-tooling"
           ["AWS_ROLE_SESSION_NAME"] = "terraform-deploy-assume-role"
         }
       }
       (loadVar("role", "assume-role/assume-role.json")) { format = "json" }
       loadVar("pactbroker_image_tag", "pact-broker-ecr-registry-deploy/tag")
-      ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps("pay-infra/provisioning/terraform/deployments/deploy/deploy-tooling/environment/pactbroker")
+      ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps(
+        "pay-infra/provisioning/terraform/deployments/deploy/deploy-tooling/environment/pactbroker",
+      )
       new TaskStep {
         task = "deploy-pact-broker"
         file = "pay-ci/ci/tasks/deploy-pact-broker.yml"
@@ -69,13 +79,16 @@ jobs {
         }
       }
     }
-    on_failure = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { message = "Failed to deploy pay-pact-broker image"
-        slack_channel_for_failure = "#govuk-pay-owl" }
-    )
-    on_success = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { is_a_success = true; message = "Deployed pay-pact-broker image" }
-    )
+    on_failure =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        message = "Failed to deploy pay-pact-broker image"
+        slack_channel_for_failure = "#govuk-pay-owl"
+      })
+    on_success =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        is_a_success = true
+        message = "Deployed pay-pact-broker image"
+      })
   }
 }
 

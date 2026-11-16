@@ -2,10 +2,11 @@ amends "../common/shared_pipelines/deploy-logging-pipeline.pkl"
 
 concourse_team_name = "pay-dev"
 
-s3ObjectPathForEventNotification = Map (
-  "dev", "s3/pay-govuk-logs-dev/2025-04-15-00-00-00-2AD1799A1B3E2A9D",
-  "test", "s3-e2e/test-log.txt"
-)
+s3ObjectPathForEventNotification =
+  Map(
+    "dev", "s3/pay-govuk-logs-dev/2025-04-15-00-00-00-2AD1799A1B3E2A9D",
+    "test", "s3-e2e/test-log.txt",
+  )
 
 loggingEnvironments = new Listing<LoggingEnv> {
   new LoggingEnv {
@@ -20,18 +21,23 @@ loggingEnvironments = new Listing<LoggingEnv> {
     depends_on_job = "e2e-test-logging-pipeline-in-test-e2e-env"
   }
   new LoggingEnv {
-    account = "test" environment = "test-e2e"
+    account = "test"
+    environment = "test-e2e"
     run_e2e_test_after_deploy = true
     tf_root = "pay-infra/provisioning/terraform/deployments/test/e2e_test_logging_pipeline"
   }
   new LoggingEnv {
-    account = "test" environment = "test-12"
-    tf_root = "pay-infra/provisioning/terraform/deployments/test/test-12/management/logging_pipeline"
+    account = "test"
+    environment = "test-12"
+    tf_root =
+      "pay-infra/provisioning/terraform/deployments/test/test-12/management/logging_pipeline"
     depends_on_job = "e2e-test-logging-pipeline-in-test-e2e-env"
   }
   new LoggingEnv {
-    account = "test" environment = "test-perf-1"
-    tf_root = "pay-infra/provisioning/terraform/deployments/test/test-perf-1/management/logging_pipeline"
+    account = "test"
+    environment = "test-perf-1"
+    tf_root =
+      "pay-infra/provisioning/terraform/deployments/test/test-perf-1/management/logging_pipeline"
     depends_on_job = "e2e-test-logging-pipeline-in-test-e2e-env"
   }
 }

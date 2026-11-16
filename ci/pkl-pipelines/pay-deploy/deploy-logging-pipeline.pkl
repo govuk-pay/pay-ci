@@ -3,7 +3,6 @@ amends "../common/shared_pipelines/deploy-logging-pipeline.pkl"
 concourse_team_name = "pay-deploy"
 
 loggingEnvironments = new Listing<LoggingEnv> {
-
   new LoggingEnv {
     account = "deploy"
     tf_root = "pay-infra/provisioning/terraform/deployments/deploy/logging_pipeline"
@@ -11,12 +10,14 @@ loggingEnvironments = new Listing<LoggingEnv> {
   new LoggingEnv {
     account = "deploy"
     environment = "deploy-tooling"
-    tf_root = "pay-infra/provisioning/terraform/deployments/deploy/deploy-tooling/management/logging_pipeline"
+    tf_root =
+      "pay-infra/provisioning/terraform/deployments/deploy/deploy-tooling/management/logging_pipeline"
   }
   new LoggingEnv {
     account = "deploy"
     environment = "deploy-pay-cd"
-    tf_root = "pay-infra/provisioning/terraform/deployments/deploy/deploy-pay-cd/management/logging_pipeline"
+    tf_root =
+      "pay-infra/provisioning/terraform/deployments/deploy/deploy-pay-cd/management/logging_pipeline"
   }
 
   new LoggingEnv {
@@ -26,7 +27,8 @@ loggingEnvironments = new Listing<LoggingEnv> {
   new LoggingEnv {
     account = "staging"
     environment = "staging-2"
-    tf_root = "pay-infra/provisioning/terraform/deployments/staging/staging-2/management/logging_pipeline"
+    tf_root =
+      "pay-infra/provisioning/terraform/deployments/staging/staging-2/management/logging_pipeline"
   }
 
   new LoggingEnv {
@@ -36,7 +38,7 @@ loggingEnvironments = new Listing<LoggingEnv> {
   new LoggingEnv {
     account = "production"
     environment = "production-2"
-    tf_root = "pay-infra/provisioning/terraform/deployments/production/production-2/management/logging_pipeline"
+    tf_root =
+      "pay-infra/provisioning/terraform/deployments/production/production-2/management/logging_pipeline"
   }
-
 }

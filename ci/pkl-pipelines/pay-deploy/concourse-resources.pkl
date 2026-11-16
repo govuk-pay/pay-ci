@@ -1,9 +1,10 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
 import "../common/shared_resources_for_slack_notifications.pkl"
-import "../common/PayResources.pkl"
 
 local class ConcourseResource {
   name: String
@@ -11,7 +12,7 @@ local class ConcourseResource {
 }
 
 local concourse_resources = new Listing<ConcourseResource> {
-  new { name = "cron-resource" git_branch = "main" }
+  new { name = "cron-resource"; git_branch = "main" }
 }
 
 resource_types {
@@ -30,7 +31,9 @@ resources {
     }
 
     shared_resources.payDockerHubResource(
-      "\(concourse_resource.name)-dockerhub", "governmentdigitalservice/pay-\(concourse_resource.name)", "latest"
+      "\(concourse_resource.name)-dockerhub",
+      "governmentdigitalservice/pay-\(concourse_resource.name)",
+      "latest",
     )
   }
   shared_resources.payCiGitHubResource
@@ -115,7 +118,8 @@ jobs {
         params {
           ["channel"] = "#govuk-pay-activity"
           ["silent"] = true
-          ["text"] = ":green-circle: \(concourse_resource.name) build and pushed to dockerhub successfully - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+          ["text"] =
+            ":green-circle: \(concourse_resource.name) build and pushed to dockerhub successfully - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
           ["icon_emoji"] = ":concourse:"
           ["username"] = "pay-concourse"
         }
@@ -126,7 +130,8 @@ jobs {
         params {
           ["channel"] = "#govuk-pay-announce"
           ["silent"] = true
-          ["text"] = ":red-circle: \(concourse_resource.name) failed to build and push to dockerhub - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+          ["text"] =
+            ":red-circle: \(concourse_resource.name) failed to build and push to dockerhub - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
           ["icon_emoji"] = ":concourse:"
           ["username"] = "pay-concourse"
         }

@@ -1,12 +1,15 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
 import "../common/shared_resources_for_multi_arch_builds.pkl"
-import "../common/shared_resources_for_test_pipelines.pkl" as shared_test
 import "../common/shared_resources_for_slack_notifications.pkl"
-import "../common/PayResources.pkl"
+import "../common/shared_resources_for_test_pipelines.pkl" as shared_test
 
 local class ImageToCopyFromDockerhubToECR {
   name: String
@@ -16,18 +19,25 @@ local class ImageToCopyFromDockerhubToECR {
 }
 
 local images_to_copy_from_dockerhub_to_ecr = new Listing<ImageToCopyFromDockerhubToECR> {
-  new { name = "postgres-15-alpine" repo = "postgres" tag = "15-alpine" }
-  new { name = "localstack-localstack-3" repo = "localstack/localstack" tag = "3" }
-  new { name = "selenium-standalone-chrome-3-141-59" repo = "selenium/standalone-chrome" tag = "3.141.59" }
+  new { name = "postgres-15-alpine"; repo = "postgres"; tag = "15-alpine" }
+  new { name = "localstack-localstack-3"; repo = "localstack/localstack"; tag = "3" }
+  new {
+    name = "selenium-standalone-chrome-3-141-59"
+    repo = "selenium/standalone-chrome"
+    tag = "3.141.59"
+  }
 }
 
-local images_to_multi_arch_build = new Listing<shared_resources_for_multi_arch_builds.ImageToMultiArchBuild> {
-  new { name = "reverse-proxy" github_repo = "pay-scripts" release_tag_prefix = "reverse_proxy_" }
-  new { name = "stubs" github_repo = "pay-stubs" copy_release_to_deploy = true }
-  new { name = "zap" github_repo = "pay-scripts" release_tag_prefix = "zap_"}
+local images_to_multi_arch_build = new Listing<
+  shared_resources_for_multi_arch_builds.ImageToMultiArchBuild,
+> {
+  new { name = "reverse-proxy"; github_repo = "pay-scripts"; release_tag_prefix = "reverse_proxy_" }
+  new { name = "stubs"; github_repo = "pay-stubs"; copy_release_to_deploy = true }
+  new { name = "zap"; github_repo = "pay-scripts"; release_tag_prefix = "zap_" }
 }
 
-local typealias SlackNotificationConfig = shared_resources_for_slack_notifications.SlackNotificationConfig
+local typealias SlackNotificationConfig =
+  shared_resources_for_slack_notifications.SlackNotificationConfig
 
 resources = new {
   pipeline_self_update.PayPipelineSelfUpdateResource("pay-dev/e2e-helpers.pkl", "master")
@@ -52,31 +62,47 @@ resources = new {
   }
 
   for (image_to_build in images_to_multi_arch_build) {
-    new shared_resources_for_multi_arch_builds.MultiArchBuildGithubSourceResource { image = image_to_build }
+    new shared_resources_for_multi_arch_builds.MultiArchBuildGithubSourceResource {
+      image = image_to_build
+    }
   }
 
   shared_resources.payECRResource(
-    "endtoend-ecr-registry-test", "govukpay/endtoend", "pay_aws_test_account_id"
+    "endtoend-ecr-registry-test",
+    "govukpay/endtoend",
+    "pay_aws_test_account_id",
   ) |> withTag("latest")
 
   shared_resources.payECRResource(
-    "endtoend-zap-ecr-registry-test", "govukpay/endtoend-zap", "pay_aws_test_account_id"
+    "endtoend-zap-ecr-registry-test",
+    "govukpay/endtoend-zap",
+    "pay_aws_test_account_id",
   ) |> withTag("latest")
 
   shared_resources.payECRResourceWithVariant(
-    "endtoend-candidate-ecr-registry-test", "govukpay/endtoend", "pay_aws_test_account_id", "candidate"
+    "endtoend-candidate-ecr-registry-test",
+    "govukpay/endtoend",
+    "pay_aws_test_account_id",
+    "candidate",
   )
 
   shared_resources.payECRResourceWithVariant(
-    "endtoend-zap-candidate-ecr-registry-test", "govukpay/endtoend-zap", "pay_aws_test_account_id", "candidate"
+    "endtoend-zap-candidate-ecr-registry-test",
+    "govukpay/endtoend-zap",
+    "pay_aws_test_account_id",
+    "candidate",
   )
 
   shared_resources.payDockerHubResource(
-    "endtoend-dockerhub", "governmentdigitalservice/pay-endtoend", "latest-master"
+    "endtoend-dockerhub",
+    "governmentdigitalservice/pay-endtoend",
+    "latest-master",
   )
 
   shared_resources.payDockerHubResource(
-    "endtoend-zap-dockerhub", "governmentdigitalservice/pay-endtoend-zap", "latest-master"
+    "endtoend-zap-dockerhub",
+    "governmentdigitalservice/pay-endtoend-zap",
+    "latest-master",
   )
 
   for (image_to_build in images_to_multi_arch_build) {
@@ -85,10 +111,15 @@ resources = new {
 
   for (image_to_copy in images_to_copy_from_dockerhub_to_ecr) {
     shared_resources.payDockerHubResource(image_to_copy.name, image_to_copy.repo, image_to_copy.tag)
-    |> withCheckInterval("1h")
+      |> withCheckInterval("1h")
 
-    shared_resources.payECRResource("ecr-\(image_to_copy.name)", image_to_copy.repo, "pay_aws_test_account_id")
-    |> withTag(image_to_copy.tag) |> withCheckInterval("never")
+    shared_resources.payECRResource(
+      "ecr-\(image_to_copy.name)",
+      image_to_copy.repo,
+      "pay_aws_test_account_id",
+    )
+      |> withTag(image_to_copy.tag)
+      |> withCheckInterval("never")
   }
 
   shared_resources.slackNotificationResource
@@ -148,13 +179,16 @@ jobs = new {
       putCandidateImage("endtoend-candidate-ecr-registry-test")
     }
 
-    on_failure = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { message = "Failed to build and push pay-endtoend candidate image"
-        slack_channel_for_failure = "#govuk-pay-owl" }
-    )
-    on_success = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { is_a_success = true; message = "Built and pushed pay-endtoend candidate image" }
-    )
+    on_failure =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        message = "Failed to build and push pay-endtoend candidate image"
+        slack_channel_for_failure = "#govuk-pay-owl"
+      })
+    on_success =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        is_a_success = true
+        message = "Built and pushed pay-endtoend candidate image"
+      })
   }
 
   new {
@@ -168,19 +202,24 @@ jobs = new {
       }
 
       shared_resources.generateDockerCredsConfigStep
-      new shared_resources.ParseGithubAlphaReleaseTagTask { gitRelease = "endtoend-zap-git-release" }
+      new shared_resources.ParseGithubAlphaReleaseTagTask {
+        gitRelease = "endtoend-zap-git-release"
+      }
       shared_test.loadVar("release_number_tag", "tags/release-number")
       shared_resources.buildImage("build-endtoend-zap-image", "endtoend-zap-git-release")
       putCandidateImage("endtoend-zap-candidate-ecr-registry-test")
     }
 
-    on_failure = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { message = "Failed to build and push pay-endtoend-zap candidate image"
-        slack_channel_for_failure = "#govuk-pay-owl" }
-    )
-    on_success = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { is_a_success = true; message = "Built and pushed pay-endtoend-zap candidate image" }
-    )
+    on_failure =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        message = "Failed to build and push pay-endtoend-zap candidate image"
+        slack_channel_for_failure = "#govuk-pay-owl"
+      })
+    on_success =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        is_a_success = true
+        message = "Built and pushed pay-endtoend-zap candidate image"
+      })
   }
 
   new {
@@ -198,7 +237,9 @@ jobs = new {
         }
       }
 
-      new shared_resources.ParseECRCandidateTagTask { ecr_repo = "endtoend-candidate-ecr-registry-test" }
+      new shared_resources.ParseECRCandidateTagTask {
+        ecr_repo = "endtoend-candidate-ecr-registry-test"
+      }
       shared_test.loadVar("candidate_number_tag", "parse-candidate-tag/release-number")
       shared_test.assumeCodeBuildRole("executor", "e2e-test-assume-role")
 
@@ -209,7 +250,11 @@ jobs = new {
         }
       }
 
-      shared_test.prepareCodeBuild("endtoend", "prepare-e2e-codebuild.yml", "((.:candidate-image-tag))")
+      shared_test.prepareCodeBuild(
+        "endtoend",
+        "prepare-e2e-codebuild.yml",
+        "((.:candidate-image-tag))",
+      )
 
       new InParallelStep {
         in_parallel = new Listing {
@@ -224,24 +269,27 @@ jobs = new {
             "endtoend-ecr-registry-test",
             "endtoend-candidate-ecr-registry-test/image.tar",
             "parse-candidate-tag/release-tag",
-            true
+            true,
           )
           putStep(
             "endtoend-dockerhub",
             "endtoend-candidate-ecr-registry-test/image.tar",
             "",
-            true
+            true,
           )
         }
       }
     }
-    on_failure = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { message = "pay-endtoend failed post-merge e2e tests"
-        slack_channel_for_failure = "#govuk-pay-owl" }
-    )
-    on_success = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { is_a_success = true; message = "pay-endtoend passed post-merge e2e tests and was pushed as a final release" }
-    )
+    on_failure =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        message = "pay-endtoend failed post-merge e2e tests"
+        slack_channel_for_failure = "#govuk-pay-owl"
+      })
+    on_success =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        is_a_success = true
+        message = "pay-endtoend passed post-merge e2e tests and was pushed as a final release"
+      })
   }
 
   new {
@@ -259,7 +307,9 @@ jobs = new {
         }
       }
 
-      new shared_resources.ParseECRCandidateTagTask { ecr_repo = "endtoend-zap-candidate-ecr-registry-test" }
+      new shared_resources.ParseECRCandidateTagTask {
+        ecr_repo = "endtoend-zap-candidate-ecr-registry-test"
+      }
       shared_test.loadVar("candidate_number_tag", "parse-candidate-tag/release-number")
       shared_test.assumeCodeBuildRole("executor", "e2e-test-assume-role")
 
@@ -270,7 +320,11 @@ jobs = new {
         }
       }
 
-      shared_test.prepareCodeBuild("endtoend", "prepare-e2e-codebuild.yml", "((.:candidate-image-tag))")
+      shared_test.prepareCodeBuild(
+        "endtoend",
+        "prepare-e2e-codebuild.yml",
+        "((.:candidate-image-tag))",
+      )
 
       new InParallelStep {
         in_parallel = new Listing {
@@ -284,24 +338,27 @@ jobs = new {
             "endtoend-zap-ecr-registry-test",
             "endtoend-zap-candidate-ecr-registry-test/image.tar",
             "parse-candidate-tag/release-tag",
-            true
+            true,
           )
           putStep(
             "endtoend-zap-dockerhub",
             "endtoend-zap-candidate-ecr-registry-test/image.tar",
             "",
-            true
+            true,
           )
         }
       }
     }
-    on_failure = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { message = "pay-endtoend-zap failed post-merge e2e tests"
-        slack_channel_for_failure = "#govuk-pay-owl" }
-    )
-    on_success = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { is_a_success = true; message = "pay-endtoend-zap passed post-merge e2e tests and was pushed as a final release" }
-    )
+    on_failure =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        message = "pay-endtoend-zap failed post-merge e2e tests"
+        slack_channel_for_failure = "#govuk-pay-owl"
+      })
+    on_success =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        is_a_success = true
+        message = "pay-endtoend-zap passed post-merge e2e tests and was pushed as a final release"
+      })
   }
 
   for (image_to_build in images_to_multi_arch_build) {
@@ -319,20 +376,22 @@ jobs = new {
 local function putCandidateImage(putName: String): PutStep =
   putStep(putName, "image/image.tar", "tags/candidate-tag", true)
 
-
 local function copyImageToEcr(image: String, displayName: String): Job = new {
   name = "copy-\(image)"
   plan {
     shared_test.getStep(image, true, true)
     putStep("ecr-\(image)", "\(image)/image.tar", "", true)
   }
-  on_failure = shared_resources_for_slack_notifications.paySlackNotification(
-    new SlackNotificationConfig { message = "Failed copying \(displayName) image from Docker Hub to ECR"
-      slack_channel_for_failure = "#govuk-pay-owl" }
-  )
-  on_success = shared_resources_for_slack_notifications.paySlackNotification(
-    new SlackNotificationConfig { is_a_success = true; message = "Copied \(displayName) image from Docker Hub to ECR" }
-  )
+  on_failure =
+    shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+      message = "Failed copying \(displayName) image from Docker Hub to ECR"
+      slack_channel_for_failure = "#govuk-pay-owl"
+    })
+  on_success =
+    shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+      is_a_success = true
+      message = "Copied \(displayName) image from Docker Hub to ECR"
+    })
 }
 
 local function withTag(tag: String) = new Mixin {
@@ -343,7 +402,12 @@ local function withCheckInterval(interval: String) = new Mixin {
   check_every = interval
 }
 
-local function putStep(resourceName: String, imageName: String, additionalTags: String, skipDownload: Boolean): PutStep = new PutStep {
+local function putStep(
+  resourceName: String,
+  imageName: String,
+  additionalTags: String,
+  skipDownload: Boolean,
+): PutStep = new PutStep {
   put = resourceName
   params {
     when (imageName.length > 0) {

@@ -1,8 +1,9 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
-import "../common/PayResources.pkl"
 
 resources = new {
   pipeline_self_update.PayPipelineSelfUpdateResource("pay-deploy/pay-cli.pkl", "master")
@@ -13,7 +14,7 @@ resources = new {
     source {
       branch = "main"
       commit_filter = new {
-        exclude = new {"\\[automated release\\]"}
+        exclude = new { "\\[automated release\\]" }
       }
     }
   }
@@ -26,8 +27,8 @@ jobs {
     plan {
       new InParallelStep {
         in_parallel = new Listing<Step> {
-          new GetStep {get = "pay-ci"}
-          new GetStep {get = "pay-cli-git-main" trigger = true}
+          new GetStep { get = "pay-ci" }
+          new GetStep { get = "pay-cli-git-main"; trigger = true }
         }
       }
       new TaskStep {

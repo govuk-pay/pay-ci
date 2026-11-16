@@ -3,10 +3,10 @@ import
 import
   "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
 
+import "../common/shared_resources_for_slack_notifications.pkl"
 import "PayResources.pkl"
 import "shared_resources.pkl"
 import "shared_resources_for_deploy_pipelines.pkl"
-import "../common/shared_resources_for_slack_notifications.pkl"
 import "shared_resources_for_terraform.pkl"
 
 const commonTerraformParams = new Mixin {
@@ -18,12 +18,12 @@ const commonTerraformParams = new Mixin {
   }
 }
 
-const failureNotification = shared_resources_for_slack_notifications.paySlackNotification(
-  new shared_resources_for_slack_notifications.SlackNotificationConfig{
+const failureNotification =
+  shared_resources_for_slack_notifications.paySlackNotification(new shared_resources_for_slack_notifications
+    .SlackNotificationConfig {
     message = "Failed to apply github terraform for $BUILD_JOB_NAME."
     slack_channel_for_failure = "#govuk-pay-owl"
-  }
-)
+  })
 
 configurationGitHubResource: PayResources.PayGitHubResource = new {
   name = "configuration"
@@ -138,20 +138,20 @@ function terraformPlan(configuration_path: String, terraform_subpath: String) =
     }
   } |> commonTerraformParams
 
-function terraformApply(configuration_path: String, terraform_subpath: String) = new shared_resources_for_deploy_pipelines
-  .TerraformApplyStep {
-  terraform_root = "\(configuration_path)/\(terraform_subpath)"
-  config {
-    inputs = new Listing<TaskConfig.Input> {
-      new {
-        name = configuration_path
+function terraformApply(configuration_path: String, terraform_subpath: String) =
+  new shared_resources_for_deploy_pipelines.TerraformApplyStep {
+    terraform_root = "\(configuration_path)/\(terraform_subpath)"
+    config {
+      inputs = new Listing<TaskConfig.Input> {
+        new {
+          name = configuration_path
+        }
       }
     }
-  }
-} |> commonTerraformParams
+  } |> commonTerraformParams
 
 function putPRPlanSuccessStatus(context: String) = new Pipeline.PutStep {
-    put = "configuration-pr"
+  put = "configuration-pr"
   get_params {
     ["skip_download"] = true
   }

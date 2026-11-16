@@ -1,4 +1,5 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
@@ -10,8 +11,9 @@ resources = new {
   shared_resources.payCiGitHubResource
   shared_resources_for_times.payWeeklyTimeResource(
     "every-sunday-at-0500",
-    "05:00", "05:10",
-    "Sunday"
+    "05:00",
+    "05:10",
+    "Sunday",
   ) |> shared_resources_for_times.withLocation("UTC")
 }
 
@@ -49,4 +51,3 @@ jobs = new {
     }
   }
 }
-

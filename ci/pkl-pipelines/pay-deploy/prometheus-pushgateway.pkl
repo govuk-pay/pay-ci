@@ -1,23 +1,51 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
-import "../common/shared_resources.pkl"
-import "../common/pipeline_self_update.pkl"
-import "../common/shared_resources_for_slack_notifications.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+
 import "../common/PayResources.pkl"
+import "../common/pipeline_self_update.pkl"
+import "../common/shared_resources.pkl"
+import "../common/shared_resources_for_slack_notifications.pkl"
 
 local pushGatewayVersion = "v1.9.0"
-local typealias SlackNotificationConfig = shared_resources_for_slack_notifications.SlackNotificationConfig
+local typealias SlackNotificationConfig =
+  shared_resources_for_slack_notifications.SlackNotificationConfig
 
 resources = new {
-  pipeline_self_update.PayPipelineSelfUpdateResource("pay-deploy/prometheus-pushgateway.pkl", "master")
-  (shared_resources.payECRResource("ecr-prometheus-pushgateway", "pushgateway", "pay_aws_deploy_account_id")) {
+  pipeline_self_update.PayPipelineSelfUpdateResource(
+    "pay-deploy/prometheus-pushgateway.pkl",
+    "master",
+  )
+  (
+    shared_resources.payECRResource(
+      "ecr-prometheus-pushgateway",
+      "pushgateway",
+      "pay_aws_deploy_account_id",
+    )
+  ) {
     check_every = "never"
     source { ["tag"] = pushGatewayVersion }
   }
-  shared_resources.payECRResourceWithVariant("adot-ecr-registry-staging", "govukpay/adot", "pay_aws_staging_account_id", "release")
-  shared_resources.payDockerHubResource("prometheus-pushgateway-resource-dockerhub", "governmentdigitalservice/pay-prometheus-pushgateway-resource", "latest-master")
-  (shared_resources.payDockerHubResource("prometheus-pushgateway", "prom/pushgateway", pushGatewayVersion)) {
+  shared_resources.payECRResourceWithVariant(
+    "adot-ecr-registry-staging",
+    "govukpay/adot",
+    "pay_aws_staging_account_id",
+    "release",
+  )
+  shared_resources.payDockerHubResource(
+    "prometheus-pushgateway-resource-dockerhub",
+    "governmentdigitalservice/pay-prometheus-pushgateway-resource",
+    "latest-master",
+  )
+  (
+    shared_resources.payDockerHubResource(
+      "prometheus-pushgateway",
+      "prom/pushgateway",
+      pushGatewayVersion,
+    )
+  ) {
     check_every = "1h"
   } |> asArm()
   shared_resources.payCiGitHubResource
@@ -50,8 +78,14 @@ jobs = new {
       assumeCopyFromStagingEcrRole()
       loadVar("release_number", "ecr-release-info/release-number")
       assumeWriteToDeployEcrRole()
-      loadVarWithJsonFormat("copy-from-staging-ecr-role", "assume-copy-from-ecr-staging-role/assume-role.json")
-      loadVarWithJsonFormat("write-to-deploy-ecr-role", "assume-write-to-ecr-deploy-role/assume-role.json")
+      loadVarWithJsonFormat(
+        "copy-from-staging-ecr-role",
+        "assume-copy-from-ecr-staging-role/assume-role.json",
+      )
+      loadVarWithJsonFormat(
+        "write-to-deploy-ecr-role",
+        "assume-write-to-ecr-deploy-role/assume-role.json",
+      )
       copyAdotToDeploy()
     }
   }
@@ -61,13 +95,16 @@ jobs = new {
       getStep("prometheus-pushgateway", true, true)
       putStep("ecr-prometheus-pushgateway", "prometheus-pushgateway/image.tar", "", true)
     }
-    on_failure = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { message = "Failed copying pushgateway:v1.6.0 image from Docker Hub to ECR"
-        slack_channel_for_failure = "#govuk-pay-owl" }
-    )
-    on_success = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig { is_a_success = true; message = "Copied pushgateway:v1.6.0 image from Docker Hub to ECR" }
-    )
+    on_failure =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        message = "Failed copying pushgateway:v1.6.0 image from Docker Hub to ECR"
+        slack_channel_for_failure = "#govuk-pay-owl"
+      })
+    on_success =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        is_a_success = true
+        message = "Copied pushgateway:v1.6.0 image from Docker Hub to ECR"
+      })
   }
   new {
     name = "build-and-push-prometheus-pushgateway-resource"
@@ -152,7 +189,12 @@ local function getStep(resourceName: String, shouldTrigger: Boolean, isOci: Bool
   }
 }
 
-local function putStep(resourceName: String, imageName: String, additionalTags: String, skipDownload: Boolean): PutStep = new PutStep {
+local function putStep(
+  resourceName: String,
+  imageName: String,
+  additionalTags: String,
+  skipDownload: Boolean,
+): PutStep = new PutStep {
   put = resourceName
   params {
     when (imageName.length > 0) {
@@ -170,11 +212,11 @@ local function putStep(resourceName: String, imageName: String, additionalTags: 
 }
 
 local function asArm() = new Mixin {
-  source { 
-    ["platform"] = new Config { 
-      ["architecture"] = "arm64" 
+  source {
+    ["platform"] = new Config {
+      ["architecture"] = "arm64"
       ["os"] = "linux"
-    } 
+    }
   }
 }
 

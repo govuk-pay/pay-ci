@@ -1,13 +1,16 @@
-extends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+extends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+
+import "../PayResources.pkl"
 import "../pipeline_self_update.pkl"
 import "../shared_resources.pkl"
+import "../shared_resources_for_annotations.pkl" as shared_annotations
 import "../shared_resources_for_deploy_pipelines.pkl"
 import "../shared_resources_for_slack_notifications.pkl" as shared_slack
 import "../shared_resources_for_terraform.pkl"
-import "../shared_resources_for_annotations.pkl" as shared_annotations
-import "../PayResources.pkl"
 
 class LoggingEnv {
   account: shared_resources.AWSAccountName
@@ -23,25 +26,34 @@ hidden concourse_team_name: String
 hidden s3ObjectPathForEventNotification: Map
 
 local function getEnvironmentOrAccount(loggingEnv: LoggingEnv): String =
-  if (loggingEnv.environment != "" && loggingEnv.environment.length > 0) loggingEnv.environment
-  else loggingEnv.account.toString()
+  if (loggingEnv.environment != "" && loggingEnv.environment.length > 0)
+    loggingEnv.environment
+  else
+    loggingEnv.account.toString()
 
 local function getRegexForCloudtrailCanary(): String =
-  if (concourse_team_name == "pay-deploy") "prod/pay-logging-cloudtrail-canary-v(.*).zip"
-  else "pay-logging-cloudtrail-canary-v(.*).zip"
+  if (concourse_team_name == "pay-deploy")
+    "prod/pay-logging-cloudtrail-canary-v(.*).zip"
+  else
+    "pay-logging-cloudtrail-canary-v(.*).zip"
 
 local function getRegexForFirehoseTransformation(): String =
-  if (concourse_team_name == "pay-deploy") "prod/pay-logging-firehose-transformation-v(.*).zip"
-  else "pay-logging-firehose-transformation-v(.*).zip"
+  if (concourse_team_name == "pay-deploy")
+    "prod/pay-logging-firehose-transformation-v(.*).zip"
+  else
+    "pay-logging-firehose-transformation-v(.*).zip"
 
 local function getRegexForS3ToFirehoseDelivery(): String =
-  if (concourse_team_name == "pay-deploy") "prod/pay-logging-s3-to-firehose-delivery-v(.*).zip"
-  else "pay-logging-s3-to-firehose-delivery-v(.*).zip"
+  if (concourse_team_name == "pay-deploy")
+    "prod/pay-logging-s3-to-firehose-delivery-v(.*).zip"
+  else
+    "pay-logging-s3-to-firehose-delivery-v(.*).zip"
 
 local function getAWSAccountIdVar(): String =
-  if (concourse_team_name == "pay-deploy") "pay_aws_deploy_account_id"
-  else "pay_aws_dev_account_id"
-
+  if (concourse_team_name == "pay-deploy")
+    "pay_aws_deploy_account_id"
+  else
+    "pay_aws_dev_account_id"
 
 resource_types {
   shared_slack.slackNotificationResourceType
@@ -49,7 +61,10 @@ resource_types {
 }
 
 resources {
-  pipeline_self_update.PayPipelineSelfUpdateResource("\(concourse_team_name)/deploy-logging-pipeline.pkl", "master")
+  pipeline_self_update.PayPipelineSelfUpdateResource(
+    "\(concourse_team_name)/deploy-logging-pipeline.pkl",
+    "master",
+  )
   shared_resources.payCiGitHubResource
   shared_slack.slackNotificationResource
   shared_annotations.grafanaAnnotationResource
@@ -116,7 +131,9 @@ resources {
 }
 
 jobs {
-  pipeline_self_update.PayPipelineSelfUpdateJob("\(concourse_team_name)/deploy-logging-pipeline.pkl")
+  pipeline_self_update.PayPipelineSelfUpdateJob(
+    "\(concourse_team_name)/deploy-logging-pipeline.pkl",
+  )
 
   for (loggingEnv in loggingEnvironments) {
     getDeployJob(loggingEnv)
@@ -156,9 +173,18 @@ local function getDeployJob(loggingEnv: LoggingEnv): Job = new {
     new InParallelStep {
       in_parallel = new Listing<Step> {
         shared_resources.loadVarJson("role", "assume-role/assume-role.json")
-        shared_resources.loadVar("cloudtrail-canary-version", "pay-logging-cloudtrail-canary/version")
-        shared_resources.loadVar("firehose-transformation-version", "pay-logging-firehose-transformation/version")
-        shared_resources.loadVar("s3-to-firehose-version", "pay-logging-s3-to-firehose-delivery/version")
+        shared_resources.loadVar(
+          "cloudtrail-canary-version",
+          "pay-logging-cloudtrail-canary/version",
+        )
+        shared_resources.loadVar(
+          "firehose-transformation-version",
+          "pay-logging-firehose-transformation/version",
+        )
+        shared_resources.loadVar(
+          "s3-to-firehose-version",
+          "pay-logging-s3-to-firehose-delivery/version",
+        )
       }
     }
     ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps(loggingEnv.tf_root)
@@ -180,34 +206,36 @@ local function getDeployJob(loggingEnv: LoggingEnv): Job = new {
   }
   on_success = new InParallelStep {
     in_parallel = new Listing<Step> {
-      shared_slack.paySlackNotification(
-        new shared_slack.SlackNotificationConfig {
-          is_a_success = true
-          message = "Logging pipeline deployed successfully in \(getEnvironmentOrAccount(loggingEnv)) env with s3-to-firehose-v((.:s3-to-firehose-version)) firehose-transformation-v((.:firehose-transformation-version))"
-        }
-      )
+      shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
+        is_a_success = true
+        message =
+          "Logging pipeline deployed successfully in \(getEnvironmentOrAccount(loggingEnv)) env with s3-to-firehose-v((.:s3-to-firehose-version)) firehose-transformation-v((.:firehose-transformation-version))"
+      })
       new PutStep {
         put = "grafana-annotation"
         attempts = 3
         params = new {
-          ["tags"] = new Listing<String> { "logging-release" loggingEnv.account loggingEnv.environment }
-          ["template"] = "released ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME} logging-release s3-to-firehose-v((.:s3-to-firehose-version)) firehose-transformation-v((.:firehose-transformation-version)) (build ${BUILD_ID})"
+          ["tags"] = new Listing<String> {
+            "logging-release"
+            loggingEnv.account
+            loggingEnv.environment
+          }
+          ["template"] =
+            "released ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME} logging-release s3-to-firehose-v((.:s3-to-firehose-version)) firehose-transformation-v((.:firehose-transformation-version)) (build ${BUILD_ID})"
         }
       }
     }
   }
-  on_failure = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig {
+  on_failure =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
       message = "Logging pipeline deployment failed in \(getEnvironmentOrAccount(loggingEnv)) env"
       slack_channel_for_failure = "#govuk-pay-owl"
-    }
-  )
-  on_error = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig {
+    })
+  on_error =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
       message = "Error deploying logging pipeline in \(getEnvironmentOrAccount(loggingEnv)) env"
       slack_channel_for_failure = "#govuk-pay-owl"
-    }
-  )
+    })
 }
 
 local function getDestroyJob(loggingEnv: LoggingEnv): Job = new {
@@ -249,9 +277,21 @@ local function getE2EJob(loggingEnv: LoggingEnv): Job = new {
       in_parallel = new Listing<Step> {
         getStep("pay-ci", false, "deploy-\(getEnvironmentOrAccount(loggingEnv))")
         getStep("pay-infra", true, "deploy-\(getEnvironmentOrAccount(loggingEnv))")
-        getStep("pay-logging-cloudtrail-canary", true, "deploy-\(getEnvironmentOrAccount(loggingEnv))")
-        getStep("pay-logging-firehose-transformation", true, "deploy-\(getEnvironmentOrAccount(loggingEnv))")
-        getStep("pay-logging-s3-to-firehose-delivery", true, "deploy-\(getEnvironmentOrAccount(loggingEnv))")
+        getStep(
+          "pay-logging-cloudtrail-canary",
+          true,
+          "deploy-\(getEnvironmentOrAccount(loggingEnv))",
+        )
+        getStep(
+          "pay-logging-firehose-transformation",
+          true,
+          "deploy-\(getEnvironmentOrAccount(loggingEnv))",
+        )
+        getStep(
+          "pay-logging-s3-to-firehose-delivery",
+          true,
+          "deploy-\(getEnvironmentOrAccount(loggingEnv))",
+        )
       }
     }
     new shared_resources.AssumeConcourseRoleTask {
@@ -281,24 +321,24 @@ local function getE2EJob(loggingEnv: LoggingEnv): Job = new {
       }
     }
   }
-  on_success = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig {
+  on_success =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
       is_a_success = true
-      message = "Logging pipeline - e2e test job completed successfully in \(getEnvironmentOrAccount(loggingEnv)) environment"
-    }
-  )
-  on_failure = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig {
-      message = "Logging pipeline - e2e test job failed in \(getEnvironmentOrAccount(loggingEnv)) environment"
+      message =
+        "Logging pipeline - e2e test job completed successfully in \(getEnvironmentOrAccount(loggingEnv)) environment"
+    })
+  on_failure =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
+      message =
+        "Logging pipeline - e2e test job failed in \(getEnvironmentOrAccount(loggingEnv)) environment"
       slack_channel_for_failure = "#govuk-pay-owl"
-    }
-  )
-  on_error = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig {
-      message = "Logging pipeline - Error running e2e test in \(getEnvironmentOrAccount(loggingEnv)) environment"
+    })
+  on_error =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
+      message =
+        "Logging pipeline - Error running e2e test in \(getEnvironmentOrAccount(loggingEnv)) environment"
       slack_channel_for_failure = "#govuk-pay-owl"
-    }
-  )
+    })
 }
 
 local function getPromoteLoggingLambdasToProdJob(): Job = new {
@@ -342,9 +382,18 @@ local function getPromoteLoggingLambdasToProdJob(): Job = new {
     new InParallelStep {
       in_parallel = new Listing<Step> {
         shared_resources.loadVarJson("role", "assume-role/assume-role.json")
-        shared_resources.loadVar("cloudtrail-canary-version", "pay-logging-cloudtrail-canary/version")
-        shared_resources.loadVar("firehose-transformation-version", "pay-logging-firehose-transformation/version")
-        shared_resources.loadVar("s3-to-firehose-version", "pay-logging-s3-to-firehose-delivery/version")
+        shared_resources.loadVar(
+          "cloudtrail-canary-version",
+          "pay-logging-cloudtrail-canary/version",
+        )
+        shared_resources.loadVar(
+          "firehose-transformation-version",
+          "pay-logging-firehose-transformation/version",
+        )
+        shared_resources.loadVar(
+          "s3-to-firehose-version",
+          "pay-logging-s3-to-firehose-delivery/version",
+        )
       }
     }
     new TaskStep {
