@@ -1,8 +1,10 @@
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
 import ".../common/PayResources.pkl"
 
-function payDailyTimeResource(_name: String, _start: String, _stop: String): Pipeline.Resource = new PayResources.PayTimeResource {
+function payDailyTimeResource(_name: String, _start: String, _stop: String): Pipeline.Resource = new PayResources
+  .PayTimeResource {
   name = _name
   source {
     ["start"] = _start
@@ -10,18 +12,23 @@ function payDailyTimeResource(_name: String, _start: String, _stop: String): Pip
   }
 }
 
-function payWeeklyTimeResource(_name: String, _start: String, _stop: String, day: String): Pipeline.Resource =
-  (payDailyTimeResource(_name, _start, _stop)) {
-    source {
-      ["days"] = new Listing { day }
-    }
+function payWeeklyTimeResource(
+  _name: String,
+  _start: String,
+  _stop: String,
+  day: String,
+): Pipeline.Resource = (payDailyTimeResource(_name, _start, _stop)) {
+  source {
+    ["days"] = new Listing { day }
+  }
 }
 
-function payIntervalResource(_name: String, interval: String): Pipeline.Resource = new PayResources.PayTimeResource {
+function payIntervalResource(_name: String, interval: String): Pipeline.Resource = new PayResources
+  .PayTimeResource {
   name = _name
-    source {
-      ["interval"] = interval
-    }
+  source {
+    ["interval"] = interval
+  }
 }
 
 function withLocation(timezone: String) = new Mixin {

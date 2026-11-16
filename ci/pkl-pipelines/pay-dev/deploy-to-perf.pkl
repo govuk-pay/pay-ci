@@ -1,28 +1,33 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
+import "../common/shared_resources_for_annotations.pkl"
+import "../common/shared_resources_for_deploy_pipelines.pkl"
 import "../common/shared_resources_for_metrics.pkl"
 import "../common/shared_resources_for_slack_notifications.pkl"
-import "../common/shared_resources_for_deploy_pipelines.pkl"
-import "../common/shared_resources_for_annotations.pkl"
 import "../common/shared_resources_for_terraform.pkl"
-import "../common/PayResources.pkl"
 
 local typealias PayApp = shared_resources_for_deploy_pipelines.PayApplication
-local typealias SlackNotificationConfig = shared_resources_for_slack_notifications.SlackNotificationConfig
+local typealias SlackNotificationConfig =
+  shared_resources_for_slack_notifications.SlackNotificationConfig
 
 local payScheduledTask = shared_resources_for_deploy_pipelines.payScheduledTask
 local allPayApplications = shared_resources_for_deploy_pipelines.allPayApplications
 local payApplicationsWithDB = shared_resources_for_deploy_pipelines.payApplicationsWithDB
 
-local awsEnvVars = Map("account", "test",
-  "environment", "test-perf-1")
+local awsEnvVars =
+  Map(
+    "account", "test",
+    "environment", "test-perf-1",
+  )
 
 resource_types {
   shared_resources_for_slack_notifications.slackNotificationResourceType
   shared_resources_for_metrics.prometheusPushgatewayResourceType
-  shared_resources_for_annotations.grafanaAnnotationResourceType 
+  shared_resources_for_annotations.grafanaAnnotationResourceType
 }
 
 resources = new {
@@ -30,18 +35,35 @@ resources = new {
   shared_resources_for_metrics.prometheusPushgatewayResource
   shared_resources.payCiGitHubResource
   new PayResources.PayInfraGitHubResource {}
-  shared_resources.payECRResourceWithVariant("adot-ecr-registry-perf", "govukpay/adot", "pay_aws_test_account_id", "perf")
+  shared_resources.payECRResourceWithVariant(
+    "adot-ecr-registry-perf",
+    "govukpay/adot",
+    "pay_aws_test_account_id",
+    "perf",
+  )
   for (app in allPayApplications) {
     when (app.name != "adot") {
-      shared_resources.payECRResourceWithVariant("\(app.name)-ecr-registry-perf", "govukpay/\(if (app.override_ecr_repo == null) app.name else app.override_ecr_repo)", "pay_aws_test_account_id", "perf")
+      shared_resources.payECRResourceWithVariant(
+        "\(app.name)-ecr-registry-perf",
+        "govukpay/\(if (app.override_ecr_repo == null) app.name else app.override_ecr_repo)",
+        "pay_aws_test_account_id",
+        "perf",
+      )
       when (app.has_db) {
-        shared_resources.payECRResourceWithVariant("\(app.name)-db-ecr-registry-perf", "govukpay/\(app.name)", "pay_aws_test_account_id", "perf-db")
+        shared_resources.payECRResourceWithVariant(
+          "\(app.name)-db-ecr-registry-perf",
+          "govukpay/\(app.name)",
+          "pay_aws_test_account_id",
+          "perf-db",
+        )
       }
     }
   }
   shared_resources_for_slack_notifications.slackNotificationResource
   (shared_resources_for_annotations.grafanaAnnotationResource) {
-    source { ["tags"] = new Listing<String> { "release" "test-perf-1" "test-perf-1-fargate" "test" } }
+    source {
+      ["tags"] = new Listing<String> { "release"; "test-perf-1"; "test-perf-1-fargate"; "test" }
+    }
   }
 }
 
@@ -85,16 +107,22 @@ jobs {
             put = "slack-notification"
             params = new Mapping {
               ["channel"] = "#govuk-pay-activity"
-              ["text"] = ":rocket: Starting \(app.name) deployment to perf - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
+              ["text"] =
+                ":rocket: Starting \(app.name) deployment to perf - <https://pay-cd.deploy.payments.service.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Concourse build #$BUILD_NAME>"
               ["icon_emoji"] = ":fargate:"
               ["username"] = "pay-concourse"
             }
           }
           assumeRole("terraform-test-assume-role")
           (loadVar("role", "assume-role/assume-role.json")) { format = "json" }
-          ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps(app.getTerraformRootPath("test-perf-1"))
-          shared_resources_for_deploy_pipelines.deployApplicationTask(app,
-            awsEnvVars, "deploy-to-perf")
+          ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps(
+            app.getTerraformRootPath("test-perf-1"),
+          )
+          shared_resources_for_deploy_pipelines.deployApplicationTask(
+            app,
+            awsEnvVars,
+            "deploy-to-perf",
+          )
           shared_resources_for_annotations.paySendAppReleaseAnnotation("deploy-to-perf")
           shared_resources_for_deploy_pipelines.waitForDeployTask(app, "test-perf-1")
         }
@@ -116,11 +144,24 @@ jobs {
           }
         }
         startDatabase(app)
-        shared_resources_for_slack_notifications.paySlackNotificationForDBMigration("#govuk-pay-activity", "test-perf-1")
+        shared_resources_for_slack_notifications.paySlackNotificationForDBMigration(
+          "#govuk-pay-activity",
+          "test-perf-1",
+        )
         shared_resources_for_deploy_pipelines.runDBMigrationsTask(app, "test-perf-1-fargate")
       }
-      on_success = shared_resources_for_slack_notifications.paySlackNotificationForDBMigrationStatus("#govuk-pay-activity", true, "test-perf-1")
-      on_failure = shared_resources_for_slack_notifications.paySlackNotificationForDBMigrationStatus("#govuk-pay-announce", false, "test-perf-1")
+      on_success =
+        shared_resources_for_slack_notifications.paySlackNotificationForDBMigrationStatus(
+          "#govuk-pay-activity",
+          true,
+          "test-perf-1",
+        )
+      on_failure =
+        shared_resources_for_slack_notifications.paySlackNotificationForDBMigrationStatus(
+          "#govuk-pay-announce",
+          false,
+          "test-perf-1",
+        )
       ensure = stopDatabase(app)
     }
   }
@@ -143,17 +184,26 @@ jobs {
         }
       }
       (loadVar("role", "assume-role/assume-role.json")) { format = "json" }
-      ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps("pay-infra/provisioning/terraform/deployments/test/test-perf-1/management/scheduled_http_v2")
-      shared_resources_for_deploy_pipelines.deployApplicationTask(payScheduledTask,
-        awsEnvVars, "deploy-to-perf")
+      ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps(
+        "pay-infra/provisioning/terraform/deployments/test/test-perf-1/management/scheduled_http_v2",
+      )
+      shared_resources_for_deploy_pipelines.deployApplicationTask(
+        payScheduledTask,
+        awsEnvVars,
+        "deploy-to-perf",
+      )
     }
-    on_failure = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig {
-        message = "Scheduled tasks failed to deploy alpine image ((.:alpine_image_tag)) and stream-s3-sqs image ((.:stream_s3_sqs_image_tag))" })
-    on_success = shared_resources_for_slack_notifications.paySlackNotification(
-      new SlackNotificationConfig {
+    on_failure =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+        message =
+          "Scheduled tasks failed to deploy alpine image ((.:alpine_image_tag)) and stream-s3-sqs image ((.:stream_s3_sqs_image_tag))"
+      })
+    on_success =
+      shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
         is_a_success = true
-        message = "Scheduled tasks deployed alpine image ((.:alpine_image_tag)) and stream-s3-sqs image ((.:stream_s3_sqs_image_tag)) successfully" })
+        message =
+          "Scheduled tasks deployed alpine image ((.:alpine_image_tag)) and stream-s3-sqs image ((.:stream_s3_sqs_image_tag)) successfully"
+      })
   }
 }
 
@@ -184,7 +234,6 @@ local function loadVariablesToDeployApp(app: PayApp): Listing<Step> = new Listin
     loadVar("nginx_image_tag", "nginx-proxy-ecr-registry-perf/tag")
     loadVar("nginx_release_number", "nginx-release-info/release-number")
   }
-
 }
 
 local function parseReleaseTag(appName: String, includeOutputMapping: Boolean) = new TaskStep {
@@ -208,7 +257,6 @@ local function parseReleaseTagsToDeployApp(app: PayApp): Listing<Step> = new Lis
     parseReleaseTag("adot", true)
     parseReleaseTag("nginx-proxy", true)
   }
-
 }
 
 local function startDatabase(app: PayApp) = new TaskStep {
@@ -234,12 +282,14 @@ local function sendSlackNoticationAndPutMetrics(app: PayApp, isASuccess: Boolean
     steps = new Listing<Step> {
       when (isASuccess == true) {
         shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
-          is_a_success = true; message = "Deployment of ((.:app_name)) to perf success"; is_app_deploy_notification = true
+          is_a_success = true
+          message = "Deployment of ((.:app_name)) to perf success"
+          is_app_deploy_notification = true
         })
-      }
-      else {
+      } else {
         shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
-          message = "Deployment of ((.:app_name)) to perf failed"; is_app_deploy_notification = true
+          message = "Deployment of ((.:app_name)) to perf failed"
+          is_app_deploy_notification = true
         })
       }
       shared_resources_for_metrics.paySendAppReleaseMetric(isASuccess, "test-perf-1")

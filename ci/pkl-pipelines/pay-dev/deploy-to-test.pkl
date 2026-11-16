@@ -1,28 +1,34 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
 
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
-import "../common/shared_resources_for_metrics.pkl"
-import "../common/shared_resources_for_slack_notifications.pkl"
+import "../common/shared_resources_for_annotations.pkl"
 import "../common/shared_resources_for_deploy_pipelines.pkl"
 import "../common/shared_resources_for_lock_pools.pkl"
+import "../common/shared_resources_for_metrics.pkl"
 import "../common/shared_resources_for_multi_arch_builds.pkl"
-import "../common/shared_resources_for_annotations.pkl"
+import "../common/shared_resources_for_slack_notifications.pkl"
 import "../common/shared_resources_for_terraform.pkl"
-import "../common/PayResources.pkl"
 
 local typealias PayApp = shared_resources_for_deploy_pipelines.PayApplication
-local typealias SlackNotificationConfig = shared_resources_for_slack_notifications.SlackNotificationConfig
+local typealias SlackNotificationConfig =
+  shared_resources_for_slack_notifications.SlackNotificationConfig
 local typealias MetricsConfig = shared_resources_for_deploy_pipelines.MetricsConfig
 
 local payScheduledTask = shared_resources_for_deploy_pipelines.payScheduledTask
 local allPayApplications = shared_resources_for_deploy_pipelines.allPayApplications
 local payApplicationsWithDB = shared_resources_for_deploy_pipelines.payApplicationsWithDB
 
-local awsEnvVars = Map("account", "test",
-  "environment", "test-12")
+local awsEnvVars =
+  Map(
+    "account", "test",
+    "environment", "test-12",
+  )
 
 local class AdditionalAppConfigForTestEnv {
   run_e2e_tests: Boolean = false
@@ -38,16 +44,28 @@ local class AdditionalAppConfigForTestEnv {
 }
 
 local function getTestEnvConfig(appName: String): AdditionalAppConfigForTestEnv? =
-  if (testEnvConfigForApps.containsKey(appName)) testEnvConfigForApps.getOrNull(appName)
-  else new AdditionalAppConfigForTestEnv {}
+  if (testEnvConfigForApps.containsKey(appName))
+    testEnvConfigForApps.getOrNull(appName)
+  else
+    new AdditionalAppConfigForTestEnv {}
 
 local testEnvConfigForApps: Mapping<Identifier, AdditionalAppConfigForTestEnv> = new {
   ["adminusers"] = new { run_e2e_tests = true }
-  ["adot"] = new { run_integration_tests = true; github_branch = "main" ; build_job_name_to_override = "build-and-push-adot-candidate" }
-  ["alpine"] = new { build_job_name_to_override = "build-and-push-alpine-to-ecr"; tag_regex = "alpine_alpha_release-(.*)" }
+  ["adot"] = new {
+    run_integration_tests = true
+    github_branch = "main"
+    build_job_name_to_override = "build-and-push-adot-candidate"
+  }
+  ["alpine"] = new {
+    build_job_name_to_override = "build-and-push-alpine-to-ecr"
+    tag_regex = "alpine_alpha_release-(.*)"
+  }
   ["cardid"] = new { run_e2e_tests = true }
   ["connector"] = new { run_e2e_tests = true }
-  ["egress"] = new { github_branch = "main"; build_job_name_to_override = "build-and-push-egress-candidate" }
+  ["egress"] = new {
+    github_branch = "main"
+    build_job_name_to_override = "build-and-push-egress-candidate"
+  }
   ["frontend"] = new { run_e2e_tests = true }
   ["ledger"] = new { run_e2e_tests = true }
   ["nginx-proxy"] = new { smoke_test = true }
@@ -87,18 +105,28 @@ resources = new {
       }
     }
 
-    shared_resources.payECRResourceWithVariant("\(app.name)-ecr-registry-test",
-      app.getECRRepo(), "pay_aws_test_account_id", "release")
+    shared_resources.payECRResourceWithVariant(
+      "\(app.name)-ecr-registry-test",
+      app.getECRRepo(),
+      "pay_aws_test_account_id",
+      "release",
+    )
 
-    when (getTestEnvConfig(app.name).run_e2e_tests || getTestEnvConfig(app.name).run_integration_tests) {
-      shared_resources.payECRResourceWithVariant("\(app.name)-candidate",
-        app.getECRRepo(), "pay_aws_test_account_id", "candidate")
+    when (
+      getTestEnvConfig(app.name).run_e2e_tests || getTestEnvConfig(app.name).run_integration_tests
+    ) {
+      shared_resources.payECRResourceWithVariant(
+        "\(app.name)-candidate",
+        app.getECRRepo(),
+        "pay_aws_test_account_id",
+        "candidate",
+      )
     }
   }
 
   shared_resources_for_slack_notifications.slackNotificationResource
   (shared_resources_for_annotations.grafanaAnnotationResource) {
-    source { ["tags"] = new Listing<String> { "release" "test-12" "test-12-fargate" "test" } }
+    source { ["tags"] = new Listing<String> { "release"; "test-12"; "test-12-fargate"; "test" } }
   }
 }
 
@@ -107,7 +135,6 @@ groups {
     new {
       name = app.name
       jobs = new Listing {
-
         when (getTestEnvConfig(app.name).run_e2e_tests) {
           "build-and-push-\(app.name)-candidate"
         } else {
@@ -195,7 +222,9 @@ jobs {
   getJobToDeployScheduledTasks()
 }
 
-local function getBuildAndPushCandidateJob(app: shared_resources_for_deploy_pipelines.PayApplication): Job = new {
+local function getBuildAndPushCandidateJob(
+  app: shared_resources_for_deploy_pipelines.PayApplication,
+): Job = new {
   when (getTestEnvConfig(app.name).run_e2e_tests) {
     name = "build-and-push-\(app.name)-candidate"
   } else {
@@ -255,10 +284,22 @@ local function getBuildAndPushCandidateJob(app: shared_resources_for_deploy_pipe
       new InParallelStep {
         in_parallel = new InParallelConfig {
           steps = new Listing<Step> {
-            new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR { repo = app.getECRRepo() newTag = "((.:release-tag))" }
-            new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR { repo = app.getECRRepo() newTag = "latest" }
-            when (app.is_a_java_or_node_app == true || app.name == "adot" || app.name == "nginx-proxy" || app.name == "egress") {
-              new shared_resources_for_multi_arch_builds.RetagMultiArchImageInDockerhubAsLatestMaster { repo = app.getDockerRepo() }
+            new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR {
+              repo = app.getECRRepo()
+              newTag = "((.:release-tag))"
+            }
+            new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR {
+              repo = app.getECRRepo()
+              newTag = "latest"
+            }
+            when (
+              app.is_a_java_or_node_app == true
+                || app.name == "adot"
+                || app.name == "nginx-proxy"
+                || app.name == "egress"
+            ) {
+              new shared_resources_for_multi_arch_builds
+                .RetagMultiArchImageInDockerhubAsLatestMaster { repo = app.getDockerRepo() }
             }
           }
         }
@@ -267,19 +308,41 @@ local function getBuildAndPushCandidateJob(app: shared_resources_for_deploy_pipe
   }
 
   when (getTestEnvConfig(app.name).run_e2e_tests) {
-    on_success = sendNotificationAndMetrics(app,
-      new SlackNotificationConfig { is_a_success = true; message = "\(app.name) candidate image ((.:candidate-image-tag)) built successfully" },
-      new MetricsConfig { is_a_success = true; put_metrics = true })
-    on_failure = sendNotificationAndMetrics(app,
-      new SlackNotificationConfig { message = "\(app.name) candidate image ((.:candidate-image-tag)) failed to build" },
-      new MetricsConfig { is_a_success = false; put_metrics = true })
+    on_success =
+      sendNotificationAndMetrics(
+        app,
+        new SlackNotificationConfig {
+          is_a_success = true
+          message = "\(app.name) candidate image ((.:candidate-image-tag)) built successfully"
+        },
+        new MetricsConfig { is_a_success = true; put_metrics = true },
+      )
+    on_failure =
+      sendNotificationAndMetrics(
+        app,
+        new SlackNotificationConfig {
+          message = "\(app.name) candidate image ((.:candidate-image-tag)) failed to build"
+        },
+        new MetricsConfig { is_a_success = false; put_metrics = true },
+      )
   } else {
-    on_success = sendNotificationAndMetrics(app,
-      new SlackNotificationConfig { is_a_success = true; message = "\(app.name) image ((.:release-tag)) built successfully" },
-      new MetricsConfig { is_a_success = true; put_metrics = true })
-    on_failure = sendNotificationAndMetrics(app,
-      new SlackNotificationConfig { message = "\(app.name) image ((.:release-tag)) failed to build" },
-      new MetricsConfig { is_a_success = false; put_metrics = true })
+    on_success =
+      sendNotificationAndMetrics(
+        app,
+        new SlackNotificationConfig {
+          is_a_success = true
+          message = "\(app.name) image ((.:release-tag)) built successfully"
+        },
+        new MetricsConfig { is_a_success = true; put_metrics = true },
+      )
+    on_failure =
+      sendNotificationAndMetrics(
+        app,
+        new SlackNotificationConfig {
+          message = "\(app.name) image ((.:release-tag)) failed to build"
+        },
+        new MetricsConfig { is_a_success = false; put_metrics = true },
+      )
   }
 }
 
@@ -290,9 +353,11 @@ local function getRunE2ETestsJob(app): Job = new {
     new InParallelStep {
       in_parallel = new InParallelConfig {
         steps = new Listing<Step> {
-          (getStep("\(app.name)-candidate", true)) { params {
-            ["format"] = "oci"
-          } }
+          (getStep("\(app.name)-candidate", true)) {
+            params {
+              ["format"] = "oci"
+            }
+          }
           getStep("pay-ci", false)
         }
       }
@@ -341,13 +406,24 @@ local function getRunE2ETestsJob(app): Job = new {
     new InParallelStep {
       in_parallel = new InParallelConfig {
         steps = new Listing<Step> {
-          when (app.name == "frontend" || app.name == "selfservice" || app.name == "products" || app.name == "products-ui" || app.name == "publicapi") {
+          when (
+            app.name == "frontend"
+              || app.name == "selfservice"
+              || app.name == "products"
+              || app.name == "products-ui"
+              || app.name == "publicapi"
+          ) {
             getCodeBuildTaskToRunEndToEndTests("products", false)
           }
           when (!(app.name == "products-ui" || app.name == "products")) {
             getCodeBuildTaskToRunEndToEndTests("card", true)
           }
-          when (app.name == "cardid" || app.name == "frontend" || app.name == "publicauth" || app.name == "publicapi") {
+          when (
+            app.name == "cardid"
+              || app.name == "frontend"
+              || app.name == "publicauth"
+              || app.name == "publicapi"
+          ) {
             getCodeBuildTaskToRunEndToEndTests("zap", false)
           }
         }
@@ -356,22 +432,45 @@ local function getRunE2ETestsJob(app): Job = new {
     new InParallelStep {
       in_parallel = new InParallelConfig {
         steps = new Listing<Step> {
-          new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR { repo = app.getECRRepo() newTag = "((.:release_image_tag))" }
-          new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR { repo = app.getECRRepo() newTag = "latest" }
-          when (app.is_a_java_or_node_app == true || app.name == "adot" || app.name == "nginx-proxy") {
-            new shared_resources_for_multi_arch_builds.RetagMultiArchImageInDockerhubAsLatestMaster { repo = app.getDockerRepo() }
+          new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR {
+            repo = app.getECRRepo()
+            newTag = "((.:release_image_tag))"
+          }
+          new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR {
+            repo = app.getECRRepo()
+            newTag = "latest"
+          }
+          when (
+            app.is_a_java_or_node_app == true || app.name == "adot" || app.name == "nginx-proxy"
+          ) {
+            new shared_resources_for_multi_arch_builds.RetagMultiArchImageInDockerhubAsLatestMaster {
+              repo = app.getDockerRepo()
+            }
           }
         }
       }
     }
   }
 
-  on_success = sendNotificationAndMetrics(app,
-    new SlackNotificationConfig { is_a_success = true; message = "\(app.name) candidate image ((.:candidate-image-tag)) passed post-merge end to end tests" },
-    new MetricsConfig { is_a_success = true; put_metrics = true })
-  on_failure = sendNotificationAndMetrics(app,
-    new SlackNotificationConfig { message = "\(app.name) candidate image ((.:candidate-image-tag)) failed post-merge end to end tests" },
-    new MetricsConfig { is_a_success = false; put_metrics = true })
+  on_success =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig {
+        is_a_success = true
+        message =
+          "\(app.name) candidate image ((.:candidate-image-tag)) passed post-merge end to end tests"
+      },
+      new MetricsConfig { is_a_success = true; put_metrics = true },
+    )
+  on_failure =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig {
+        message =
+          "\(app.name) candidate image ((.:candidate-image-tag)) failed post-merge end to end tests"
+      },
+      new MetricsConfig { is_a_success = false; put_metrics = true },
+    )
 }
 
 local function getAdotIntegrationTest(app): Job = new {
@@ -381,9 +480,11 @@ local function getAdotIntegrationTest(app): Job = new {
     new InParallelStep {
       in_parallel = new InParallelConfig {
         steps = new Listing<Step> {
-          (getStepWithTriggerAndPassed("adot-candidate", "deploy-toolbox")) { params {
-            ["format"] = "oci"
-          } }
+          (getStepWithTriggerAndPassed("adot-candidate", "deploy-toolbox")) {
+            params {
+              ["format"] = "oci"
+            }
+          }
           getStep("pay-ci", false)
         }
       }
@@ -447,22 +548,45 @@ local function getAdotIntegrationTest(app): Job = new {
     new InParallelStep {
       in_parallel = new InParallelConfig {
         steps = new Listing<Step> {
-          new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR { repo = app.getECRRepo() newTag = "((.:release_image_tag))" }
-          new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR { repo = app.getECRRepo() newTag = "latest" }
-          when (app.is_a_java_or_node_app == true || app.name == "adot" || app.name == "nginx-proxy") {
-            new shared_resources_for_multi_arch_builds.RetagMultiArchImageInDockerhubAsLatestMaster { repo = app.getDockerRepo() }
+          new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR {
+            repo = app.getECRRepo()
+            newTag = "((.:release_image_tag))"
+          }
+          new shared_resources_for_multi_arch_builds.RetagMultiArchImageInECR {
+            repo = app.getECRRepo()
+            newTag = "latest"
+          }
+          when (
+            app.is_a_java_or_node_app == true || app.name == "adot" || app.name == "nginx-proxy"
+          ) {
+            new shared_resources_for_multi_arch_builds.RetagMultiArchImageInDockerhubAsLatestMaster {
+              repo = app.getDockerRepo()
+            }
           }
         }
       }
     }
   }
 
-  on_success = sendNotificationAndMetrics(app,
-    new SlackNotificationConfig { is_a_success = true; message = "\(app.name) candidate image ((.:candidate-image-tag)) passed post-merge end to end tests" },
-    new MetricsConfig { put_metrics = false })
-  on_failure = sendNotificationAndMetrics(app,
-    new SlackNotificationConfig { message = "\(app.name) candidate image ((.:candidate-image-tag)) failed post-merge end to end tests" },
-    new MetricsConfig { put_metrics = false })
+  on_success =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig {
+        is_a_success = true
+        message =
+          "\(app.name) candidate image ((.:candidate-image-tag)) passed post-merge end to end tests"
+      },
+      new MetricsConfig { put_metrics = false },
+    )
+  on_failure =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig {
+        message =
+          "\(app.name) candidate image ((.:candidate-image-tag)) failed post-merge end to end tests"
+      },
+      new MetricsConfig { put_metrics = false },
+    )
 }
 
 local function getJobToDeployApp(app: shared_resources_for_deploy_pipelines.PayApplication): Job = new {
@@ -487,17 +611,30 @@ local function getJobToDeployApp(app: shared_resources_for_deploy_pipelines.PayA
       checkReleaseVersions(app)
     }
 
-    ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps(app.getTerraformRootPath("test-12"))
+    ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps(
+      app.getTerraformRootPath("test-12"),
+    )
 
     shared_resources_for_deploy_pipelines.deployApplicationTask(app, awsEnvVars, "deploy-to-test")
     shared_resources_for_deploy_pipelines.waitForDeployTask(app, "test-12")
   }
-  on_success = sendNotificationAndMetrics(app,
-    new SlackNotificationConfig { is_a_success = true; },
-    new MetricsConfig { is_a_success = true; put_metrics = true; put_sidecar_metrics = true; put_grafana_annotation = app.is_a_java_or_node_app })
-  on_failure = sendNotificationAndMetrics(app,
-    new SlackNotificationConfig { is_a_success = false },
-    new MetricsConfig { is_a_success = false; put_metrics = true; put_sidecar_metrics = true })
+  on_success =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig { is_a_success = true },
+      new MetricsConfig {
+        is_a_success = true
+        put_metrics = true
+        put_sidecar_metrics = true
+        put_grafana_annotation = app.is_a_java_or_node_app
+      },
+    )
+  on_failure =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig { is_a_success = false },
+      new MetricsConfig { is_a_success = false; put_metrics = true; put_sidecar_metrics = true },
+    )
 
   ensure = new shared_resources_for_lock_pools.ReleaseLockStep { pool = "deploy-application-test" }
 }
@@ -527,12 +664,18 @@ local function getJobToSmokeTestApp(app): Job = new {
     runSmokeTestsForApp()
   }
 
-  on_success = sendNotificationAndMetrics(app,
-    new SlackNotificationConfig { is_a_success = true; },
-    new MetricsConfig { is_a_success = true; put_metrics = true })
-  on_failure = sendNotificationAndMetrics(app,
-    new SlackNotificationConfig { is_a_success = false },
-    new MetricsConfig { is_a_success = false; put_metrics = true })
+  on_success =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig { is_a_success = true },
+      new MetricsConfig { is_a_success = true; put_metrics = true },
+    )
+  on_failure =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig { is_a_success = false },
+      new MetricsConfig { is_a_success = false; put_metrics = true },
+    )
 
   ensure = new shared_resources_for_lock_pools.ReleaseLockStep { pool = "smoke-test-test" }
 }
@@ -566,10 +709,18 @@ local function getJobToPactTagApp(app): Job = new {
     }
   }
 
-  on_success = sendNotificationAndMetrics(app, new SlackNotificationConfig { is_a_success = true },
-    new MetricsConfig { is_a_success = true; put_metrics = true })
-  on_failure = sendNotificationAndMetrics(app, new SlackNotificationConfig { is_a_success = false },
-    new MetricsConfig { is_a_success = false; put_metrics = true })
+  on_success =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig { is_a_success = true },
+      new MetricsConfig { is_a_success = true; put_metrics = true },
+    )
+  on_failure =
+    sendNotificationAndMetrics(
+      app,
+      new SlackNotificationConfig { is_a_success = false },
+      new MetricsConfig { is_a_success = false; put_metrics = true },
+    )
 }
 
 local function getJobToPushImageToStaging(app): Job = new {
@@ -634,8 +785,14 @@ local function getJobToPushImageToStaging(app): Job = new {
     new InParallelStep {
       in_parallel = new InParallelConfig {
         steps = new Listing<Step> {
-          loadVarWithJsonFormat("copy-from-test-ecr-role", "assume-copy-from-ecr-test-role/assume-role.json")
-          loadVarWithJsonFormat("write-to-staging-ecr-role", "assume-write-to-ecr-staging-role/assume-role.json")
+          loadVarWithJsonFormat(
+            "copy-from-test-ecr-role",
+            "assume-copy-from-ecr-test-role/assume-role.json",
+          )
+          loadVarWithJsonFormat(
+            "write-to-staging-ecr-role",
+            "assume-write-to-ecr-staging-role/assume-role.json",
+          )
         }
       }
     }
@@ -657,13 +814,24 @@ local function getJobForDBMigrations(app): Job = new {
         loadVar("application_image_tag", "\(app.name)-ecr-registry-test/tag")
       }
     }
-    shared_resources_for_slack_notifications.paySlackNotificationForDBMigration("#govuk-pay-announce", "test-12")
+    shared_resources_for_slack_notifications.paySlackNotificationForDBMigration(
+      "#govuk-pay-announce",
+      "test-12",
+    )
     shared_resources_for_deploy_pipelines.runDBMigrationsTask(app, "test-12-fargate")
   }
-  on_success = shared_resources_for_slack_notifications.paySlackNotificationForDBMigrationStatus(
-    "#govuk-pay-activity", true, "test-12")
-  on_failure = shared_resources_for_slack_notifications.paySlackNotificationForDBMigrationStatus(
-    "#govuk-pay-announce", false, "test-12")
+  on_success =
+    shared_resources_for_slack_notifications.paySlackNotificationForDBMigrationStatus(
+      "#govuk-pay-activity",
+      true,
+      "test-12",
+    )
+  on_failure =
+    shared_resources_for_slack_notifications.paySlackNotificationForDBMigrationStatus(
+      "#govuk-pay-announce",
+      false,
+      "test-12",
+    )
 }
 
 local function getJobToDeployScheduledTasks(): Job = new {
@@ -685,14 +853,26 @@ local function getJobToDeployScheduledTasks(): Job = new {
       }
     }
     loadVarWithJsonFormat("role", "assume-role/assume-role.json")
-    ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps("pay-infra/provisioning/terraform/deployments/test/test-12/management/scheduled_http_v2")
-    shared_resources_for_deploy_pipelines.deployApplicationTask(payScheduledTask,
-      awsEnvVars, "deploy-to-test")
+    ...shared_resources_for_terraform.LoadTerraformVersionForTFRootSteps(
+      "pay-infra/provisioning/terraform/deployments/test/test-12/management/scheduled_http_v2",
+    )
+    shared_resources_for_deploy_pipelines.deployApplicationTask(
+      payScheduledTask,
+      awsEnvVars,
+      "deploy-to-test",
+    )
   }
-  on_failure = shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
-    message = "Scheduled tasks failed to deploy alpine image ((.:alpine_image_tag)) and stream-s3-sqs image ((.:stream_s3_sqs_image_tag))" })
-  on_success = shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig { is_a_success = true
-    message = "Scheduled tasks deployed alpine image ((.:alpine_image_tag)) and stream-s3-sqs image ((.:stream_s3_sqs_image_tag)) successfully" })
+  on_failure =
+    shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+      message =
+        "Scheduled tasks failed to deploy alpine image ((.:alpine_image_tag)) and stream-s3-sqs image ((.:stream_s3_sqs_image_tag))"
+    })
+  on_success =
+    shared_resources_for_slack_notifications.paySlackNotification(new SlackNotificationConfig {
+      is_a_success = true
+      message =
+        "Scheduled tasks deployed alpine image ((.:alpine_image_tag)) and stream-s3-sqs image ((.:stream_s3_sqs_image_tag)) successfully"
+    })
 }
 
 local function getResourcesToDeployApp(app: PayApp): InParallelStep = new InParallelStep {
@@ -776,7 +956,7 @@ local function parseReleaseTag(appName: String, includeOutputMapping: Boolean) =
   }
 }
 
-local function getGitShaForReleaseTag (app): TaskStep = new TaskStep {
+local function getGitShaForReleaseTag(app): TaskStep = new TaskStep {
   task = "get-git-sha-for-release-tag"
   file = "pay-ci/ci/tasks/get-git-sha-for-release-tag.yml"
   params {
@@ -786,7 +966,10 @@ local function getGitShaForReleaseTag (app): TaskStep = new TaskStep {
   }
 }
 
-local function getCodeBuildTaskToRunEndToEndTests(endToEndTest: String, retryIfTaskFailed: Boolean): TaskStep = new TaskStep {
+local function getCodeBuildTaskToRunEndToEndTests(
+  endToEndTest: String,
+  retryIfTaskFailed: Boolean,
+): TaskStep = new TaskStep {
   task = "run-codebuild-\(endToEndTest)"
   file = "pay-ci/ci/tasks/run-codebuild.yml"
   when (retryIfTaskFailed) {
@@ -840,10 +1023,16 @@ local function runSmokeTestsForApp(): InParallelStep = new InParallelStep {
     steps = new Listing<Step> {
       runSmokeTest("run_create_card_payment_sandbox-test", "card_sandbox_test", false)
       runSmokeTest("run_recurring_card_payment_sandbox-test", "rec_card_sandbox_test", false)
-      runSmokeTest("run_create_card_payment_worldpay_with_3ds2-test",
-        "card_wpay_3ds2_test", true)
-      runSmokeTest("run_create_card_payment_worldpay_with_3ds2_exemption-test",
-        "card_wpay_3ds2ex_test", true)
+      runSmokeTest(
+        "run_create_card_payment_worldpay_with_3ds2-test",
+        "card_wpay_3ds2_test",
+        true,
+      )
+      runSmokeTest(
+        "run_create_card_payment_worldpay_with_3ds2_exemption-test",
+        "card_wpay_3ds2ex_test",
+        true,
+      )
       runSmokeTest("run_create_card_payment_worldpay_without_3ds-test", "card_wpay_test", true)
       runSmokeTest("run_recurring_card_payment_worldpay-test", "reccard_worldpay_test", true)
       runSmokeTest("run_cancel_card_payment_sandbox-test", "cancel_sandbox_test", false)
@@ -857,8 +1046,7 @@ local function runSmokeTestsForApp(): InParallelStep = new InParallelStep {
   }
 }
 
-local function runSmokeTest(taskName: String, smokeTestName: String,
-  shouldRetry: Boolean): TaskStep = new TaskStep {
+local function runSmokeTest(taskName: String, smokeTestName: String, shouldRetry: Boolean): TaskStep = new TaskStep {
   task = taskName
   when (shouldRetry) {
     attempts = 10
@@ -871,8 +1059,11 @@ local function runSmokeTest(taskName: String, smokeTestName: String,
   }
 }
 
-local function sendNotificationAndMetrics (app: PayApp, slackConfig: SlackNotificationConfig,
-  metricsConfig: MetricsConfig) = new InParallelStep {
+local function sendNotificationAndMetrics(
+  app: PayApp,
+  slackConfig: SlackNotificationConfig,
+  metricsConfig: MetricsConfig,
+) = new InParallelStep {
   in_parallel = new InParallelConfig {
     steps = new Listing<Step> {
       ...sendSlackNotification(slackConfig)
@@ -925,13 +1116,14 @@ local function assumeRoleWithAccount(awsRoleSessionName: String, account: String
   params {
     when (account == "pay_aws_deploy_account_id") {
       ["AWS_ROLE_ARN"] = "arn:aws:iam::((\(account))):role/concourse_trigger_canary"
-    }
-    else {
+    } else {
       when (awsRoleSessionName == "codebuild-assume-role") {
-        ["AWS_ROLE_ARN"] = "arn:aws:iam::((\(account))):role/pay-cd-pay-dev-codebuild-builder-test-12"
+        ["AWS_ROLE_ARN"] =
+          "arn:aws:iam::((\(account))):role/pay-cd-pay-dev-codebuild-builder-test-12"
       } else {
         when (awsRoleSessionName == "e2e-test-assume-role") {
-          ["AWS_ROLE_ARN"] = "arn:aws:iam::((\(account))):role/pay-cd-pay-dev-codebuild-executor-test-12"
+          ["AWS_ROLE_ARN"] =
+            "arn:aws:iam::((\(account))):role/pay-cd-pay-dev-codebuild-executor-test-12"
         } else {
           ["AWS_ROLE_ARN"] = "arn:aws:iam::((\(account))):role/concourse"
         }

@@ -1,10 +1,11 @@
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
+import "../common/PayResources.pkl"
+import "../common/shared_resources_for_slack_notifications.pkl" as shared_slack
+import "../common/shared_resources_for_test_pipelines.pkl" as shared_test
 import "./shared_resources.pkl"
 import "./shared_resources_for_deploy_pipelines.pkl"
-import "../common/PayResources.pkl"
-import "../common/shared_resources_for_test_pipelines.pkl" as shared_test
-import "../common/shared_resources_for_slack_notifications.pkl" as shared_slack
 
 open class ImageToMultiArchBuild {
   name: String
@@ -13,7 +14,7 @@ open class ImageToMultiArchBuild {
   ecr_repo: String = "govukpay/\(name)"
   push_to_docker_hub: Boolean = true
   codebuild_project_name: String = name
-  release_tag_prefix: String  = ""
+  release_tag_prefix: String = ""
   branch: String = "master"
   copy_release_to_deploy: Boolean = false
   retag_after_build: Boolean = false // At the end of a build candidate job, retag the image as release
@@ -35,7 +36,9 @@ class MultiArchCandidateBuildJob extends Pipeline.Job {
 
     new Pipeline.InParallelStep {
       in_parallel = new Listing<Pipeline.Step> {
-        new shared_resources.ParseGithubAlphaReleaseTagTask { gitRelease = "\(image.name)-git-release" }
+        new shared_resources.ParseGithubAlphaReleaseTagTask {
+          gitRelease = "\(image.name)-git-release"
+        }
         shared_test.assumeCodeBuildRole("builder", "codebuild-assume-role")
         shared_resources.generateDockerCredsConfigStep
         when (image.retag_after_build) {
@@ -64,20 +67,28 @@ class MultiArchCandidateBuildJob extends Pipeline.Job {
     when (image.retag_after_build) {
       new Pipeline.InParallelStep {
         in_parallel = new Listing<Pipeline.Step> {
-          new RetagMultiArchImageInECR { repo = "govukpay/bastion" newTag = "((.:release-image-tag))" }
-          new RetagMultiArchImageInECR { repo = "govukpay/bastion" newTag = "latest" }
-          new RetagMultiArchImageInDockerhubAsLatestMaster { repo = "governmentdigitalservice/pay-aws-bastion" }
+          new RetagMultiArchImageInECR {
+            repo = "govukpay/bastion"
+            newTag = "((.:release-image-tag))"
+          }
+          new RetagMultiArchImageInECR { repo = "govukpay/bastion"; newTag = "latest" }
+          new RetagMultiArchImageInDockerhubAsLatestMaster {
+            repo = "governmentdigitalservice/pay-aws-bastion"
+          }
         }
       }
     }
   }
-  on_failure = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig { message = "Failed to build and push \(image.name)"
-      slack_channel_for_failure = "#govuk-pay-owl" }
-  )
-  on_success = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig { is_a_success = true; message = "Built and pushed \(image.name)" }
-  )
+  on_failure =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
+      message = "Failed to build and push \(image.name)"
+      slack_channel_for_failure = "#govuk-pay-owl"
+    })
+  on_success =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
+      is_a_success = true
+      message = "Built and pushed \(image.name)"
+    })
 }
 
 open class MultiArchEndToEndTest extends Pipeline.Job {
@@ -95,7 +106,9 @@ open class MultiArchEndToEndTest extends Pipeline.Job {
     new Pipeline.InParallelStep {
       in_parallel = new Listing {
         shared_resources.generateDockerCredsConfigStep
-        new shared_resources.ParseECRCandidateTagTask { ecr_repo = "\(image.name)-candidate-ecr-registry-test" }
+        new shared_resources.ParseECRCandidateTagTask {
+          ecr_repo = "\(image.name)-candidate-ecr-registry-test"
+        }
         shared_test.assumeCodeBuildRole("executor", "e2e-test-assume-role")
         new shared_resources.AssumeConcourseRoleTask {}
         when (image.copy_release_to_deploy) {
@@ -106,7 +119,8 @@ open class MultiArchEndToEndTest extends Pipeline.Job {
               ["assume-role"] = "assume-write-to-deploy-role"
             }
             params = new {
-              ["AWS_ROLE_ARN"] = "arn:aws:iam::((pay_aws_deploy_account_id)):role/concourse_dev_worker_ecr_access"
+              ["AWS_ROLE_ARN"] =
+                "arn:aws:iam::((pay_aws_deploy_account_id)):role/concourse_dev_worker_ecr_access"
               ["AWS_ROLE_SESSION_NAME"] = "write-ecr-to-deploy"
             }
           }
@@ -122,12 +136,19 @@ open class MultiArchEndToEndTest extends Pipeline.Job {
         shared_test.loadVar("release_image_tag", "parse-candidate-tag/release-tag")
         shared_test.loadVar("release_number", "parse-candidate-tag/release-number")
         when (image.copy_release_to_deploy) {
-          shared_test.loadVarJson("write-to-deploy-role", "assume-write-to-deploy-role/assume-role.json")
+          shared_test.loadVarJson(
+            "write-to-deploy-role",
+            "assume-write-to-deploy-role/assume-role.json",
+          )
         }
       }
     }
 
-    shared_test.prepareCodeBuild(image.name, "prepare-e2e-codebuild.yml", "((.:candidate-image-tag))")
+    shared_test.prepareCodeBuild(
+      image.name,
+      "prepare-e2e-codebuild.yml",
+      "((.:candidate-image-tag))",
+    )
 
     new Pipeline.InParallelStep {
       in_parallel = new Listing {
@@ -139,8 +160,8 @@ open class MultiArchEndToEndTest extends Pipeline.Job {
 
     new Pipeline.InParallelStep {
       in_parallel = new Listing {
-        new RetagMultiArchImageInECR { repo = image.ecr_repo newTag = "((.:release_image_tag))" }
-        new RetagMultiArchImageInECR { repo = image.ecr_repo newTag = "latest" }
+        new RetagMultiArchImageInECR { repo = image.ecr_repo; newTag = "((.:release_image_tag))" }
+        new RetagMultiArchImageInECR { repo = image.ecr_repo; newTag = "latest" }
         new RetagMultiArchImageInDockerhubAsLatestMaster { repo = image.dockerhub_repo }
         when (image.copy_release_to_deploy) {
           new Pipeline.TaskStep {
@@ -149,28 +170,34 @@ open class MultiArchEndToEndTest extends Pipeline.Job {
             privileged = true
             params = new {
               ["DESTINATION_AWS_ACCESS_KEY_ID"] = "((.:write-to-deploy-role.AWS_ACCESS_KEY_ID))"
-              ["DESTINATION_AWS_SECRET_ACCESS_KEY"] = "((.:write-to-deploy-role.AWS_SECRET_ACCESS_KEY))"
+              ["DESTINATION_AWS_SECRET_ACCESS_KEY"] =
+                "((.:write-to-deploy-role.AWS_SECRET_ACCESS_KEY))"
               ["DESTINATION_AWS_SESSION_TOKEN"] = "((.:write-to-deploy-role.AWS_SESSION_TOKEN))"
-              ["DESTINATION_ECR_REGISTRY"] = "((pay_aws_deploy_account_id)).dkr.ecr.eu-west-1.amazonaws.com"
+              ["DESTINATION_ECR_REGISTRY"] =
+                "((pay_aws_deploy_account_id)).dkr.ecr.eu-west-1.amazonaws.com"
               ["ECR_REPO_NAME"] = image.ecr_repo
               ["RELEASE_NUMBER"] = "((.:release_number))"
               ["SOURCE_AWS_ACCESS_KEY_ID"] = "((.:retag-role.AWS_ACCESS_KEY_ID))"
               ["SOURCE_AWS_SECRET_ACCESS_KEY"] = "((.:retag-role.AWS_SECRET_ACCESS_KEY))"
               ["SOURCE_AWS_SESSION_TOKEN"] = "((.:retag-role.AWS_SESSION_TOKEN))"
-              ["SOURCE_ECR_REGISTRY"] = "((pay_aws_test_account_id)).dkr.ecr.eu-west-1.amazonaws.com"
+              ["SOURCE_ECR_REGISTRY"] =
+                "((pay_aws_test_account_id)).dkr.ecr.eu-west-1.amazonaws.com"
             }
           }
         }
       }
     }
   }
-  on_failure = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig { message = "\(image.name) failed post-merge e2e tests"
-      slack_channel_for_failure = "#govuk-pay-owl" }
-  )
-  on_success = shared_slack.paySlackNotification(
-    new shared_slack.SlackNotificationConfig { is_a_success = true; message = "\(image.name) passed post-merge e2e tests and was pushed as a final release" }
-  )
+  on_failure =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
+      message = "\(image.name) failed post-merge e2e tests"
+      slack_channel_for_failure = "#govuk-pay-owl"
+    })
+  on_success =
+    shared_slack.paySlackNotification(new shared_slack.SlackNotificationConfig {
+      is_a_success = true
+      message = "\(image.name) passed post-merge e2e tests and was pushed as a final release"
+    })
 }
 
 local class RunCodeBuildStep extends Pipeline.TaskStep {
@@ -205,12 +232,12 @@ const function multiArchCandidateBuild(image: ImageToMultiArchBuild): Listing<Pi
   new Pipeline.InParallelStep {
     in_parallel = new Pipeline.InParallelConfig {
       steps = new Listing<Pipeline.Step> {
-        new RunCodeBuildStep { _appName = image.codebuild_project_name arch = "amd64" }
-        new RunCodeBuildStep { _appName = image.codebuild_project_name arch = "armv8" }
+        new RunCodeBuildStep { _appName = image.codebuild_project_name; arch = "amd64" }
+        new RunCodeBuildStep { _appName = image.codebuild_project_name; arch = "armv8" }
       }
     }
   }
-  new RunCodeBuildStep { _appName = image.codebuild_project_name arch = "manifest" }
+  new RunCodeBuildStep { _appName = image.codebuild_project_name; arch = "manifest" }
 }
 
 class RetagMultiArchImageInECR extends Pipeline.TaskStep {
@@ -219,13 +246,16 @@ class RetagMultiArchImageInECR extends Pipeline.TaskStep {
   hidden sourceTag: String = "((.:candidate-image-tag))"
   hidden account: shared_resources.AWSAccountName = "test"
 
-  task = "retag-candidate-as-\(if (newTag.contains("release")) "release" else if (newTag.contains("perf")) "perf" else newTag)-in-ecr"
+  task =
+    "retag-candidate-as-\(if (newTag.contains("release")) "release" else if (newTag.contains("perf")) "perf" else newTag)-in-ecr"
   file = "pay-ci/ci/tasks/manifest-retag.yml"
   params = new {
     ["DOCKER_LOGIN_ECR"] = "1"
     ["AWS_ACCOUNT_ID"] = "((pay_aws_\(account)_account_id))"
-    ["SOURCE_MANIFEST"] = "((pay_aws_\(account)_account_id)).dkr.ecr.eu-west-1.amazonaws.com/\(repo):\(sourceTag)"
-    ["NEW_MANIFEST"] = "((pay_aws_\(account)_account_id)).dkr.ecr.eu-west-1.amazonaws.com/\(repo):\(newTag)"
+    ["SOURCE_MANIFEST"] =
+      "((pay_aws_\(account)_account_id)).dkr.ecr.eu-west-1.amazonaws.com/\(repo):\(sourceTag)"
+    ["NEW_MANIFEST"] =
+      "((pay_aws_\(account)_account_id)).dkr.ecr.eu-west-1.amazonaws.com/\(repo):\(newTag)"
     ["AWS_ACCESS_KEY_ID"] = "((.:retag-role.AWS_ACCESS_KEY_ID))"
     ["AWS_SECRET_ACCESS_KEY"] = "((.:retag-role.AWS_SECRET_ACCESS_KEY))"
     ["AWS_SESSION_TOKEN"] = "((.:retag-role.AWS_SESSION_TOKEN))"
@@ -258,7 +288,8 @@ class AssumeRetagRoleStep extends Pipeline.TaskStep {
   }
 }
 
-const LoadAssumedRetagRoleVar: Pipeline.LoadVarStep = shared_resources.loadVarJson("retag-role", "assume-retag-role/assume-role.json")
+const LoadAssumedRetagRoleVar: Pipeline.LoadVarStep =
+  shared_resources.loadVarJson("retag-role", "assume-retag-role/assume-role.json")
 
 class MultiArchBuildGithubSourceResource extends PayResources.PayGitHubResource {
   hidden image: ImageToMultiArchBuild
@@ -272,9 +303,10 @@ class MultiArchBuildGithubSourceResource extends PayResources.PayGitHubResource 
 }
 
 // I'd rather this be a class but that requires a giant refactor
-function multiArchCandidateECRRepoResource(image: ImageToMultiArchBuild): Pipeline.Resource = shared_resources.payECRResourceWithVariant(
-  "\(image.name)-candidate-ecr-registry-test",
-  "govukpay/\(image.name)",
-  "pay_aws_test_account_id",
-  "candidate"
-)
+function multiArchCandidateECRRepoResource(image: ImageToMultiArchBuild): Pipeline.Resource =
+  shared_resources.payECRResourceWithVariant(
+    "\(image.name)-candidate-ecr-registry-test",
+    "govukpay/\(image.name)",
+    "pay_aws_test_account_id",
+    "candidate",
+  )

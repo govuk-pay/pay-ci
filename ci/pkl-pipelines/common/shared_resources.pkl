@@ -1,5 +1,7 @@
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
 
 import ".../common/PayResources.pkl"
 
@@ -13,7 +15,7 @@ anonymousConcourseRunnerResource = new TaskConfig.AnonymousResource {
   }
 }
 
-payCiGitHubResource: PayResources.PayGitHubResource = new  {
+payCiGitHubResource: PayResources.PayGitHubResource = new {
   name = "pay-ci"
   repoName = "pay-ci"
   source {
@@ -21,7 +23,7 @@ payCiGitHubResource: PayResources.PayGitHubResource = new  {
   }
 }
 
-payInfraGitHubResource: PayResources.PayInfraGitHubResource = new  {}
+payInfraGitHubResource: PayResources.PayInfraGitHubResource = new {}
 
 function payDockerHubResource(resource_name: String, repo: String, tag: String): Pipeline.Resource = new {
   name = resource_name
@@ -35,7 +37,11 @@ function payDockerHubResource(resource_name: String, repo: String, tag: String):
   }
 }
 
-function payDockerHubResourceAsPayResource(resource_name: String, repo: String, _tag: String): PayResources.PayDockerHubResource = new {
+function payDockerHubResourceAsPayResource(
+  resource_name: String,
+  repo: String,
+  _tag: String,
+): PayResources.PayDockerHubResource = new {
   name = resource_name
   source {
     repository = repo
@@ -43,9 +49,18 @@ function payDockerHubResourceAsPayResource(resource_name: String, repo: String, 
   }
 }
 
-function payECRResource(resource_name: String, repo: String, aws_account_id: String): Pipeline.Resource = payECRResourceWithVariant(resource_name, repo, aws_account_id, "")
+function payECRResource(
+  resource_name: String,
+  repo: String,
+  aws_account_id: String,
+): Pipeline.Resource = payECRResourceWithVariant(resource_name, repo, aws_account_id, "")
 
-function payECRResourceWithVariant(resource_name: String, repo: String, aws_account_id: String, variant: String): Pipeline.Resource = new {
+function payECRResourceWithVariant(
+  resource_name: String,
+  repo: String,
+  aws_account_id: String,
+  variant: String,
+): Pipeline.Resource = new {
   name = resource_name
   type = "registry-image"
   icon = "docker"
@@ -63,7 +78,7 @@ function payECRResourceWithVariant(resource_name: String, repo: String, aws_acco
   }
 }
 
-slackNotificationResource = new Pipeline.Resource{
+slackNotificationResource = new Pipeline.Resource {
   name = "slack-notification"
   type = "slack-notification"
   source = new {
@@ -71,7 +86,7 @@ slackNotificationResource = new Pipeline.Resource{
   }
 }
 
-slackNotificationResourceType = new Pipeline.ResourceType{
+slackNotificationResourceType = new Pipeline.ResourceType {
   name = "slack-notification"
   type = "registry-image"
   source = new {
@@ -81,13 +96,13 @@ slackNotificationResourceType = new Pipeline.ResourceType{
 }
 
 generateDockerCredsConfigStep = new Pipeline.TaskStep {
-    task = "generate-docker-creds-config"
-    file = "pay-ci/ci/tasks/generate-docker-config-file.yml"
-    params = new {
-        ["USERNAME"] = "((docker-username))"
-        ["PASSWORD"] = "((docker-access-token))"
-        ["EMAIL"] = "((docker-email))"
-    }
+  task = "generate-docker-creds-config"
+  file = "pay-ci/ci/tasks/generate-docker-config-file.yml"
+  params = new {
+    ["USERNAME"] = "((docker-username))"
+    ["PASSWORD"] = "((docker-access-token))"
+    ["EMAIL"] = "((docker-email))"
+  }
 }
 
 pullRequestResourceType = new Pipeline.ResourceType {
@@ -143,12 +158,14 @@ function putPRTestFailedStatus(resourceName: String, test_name: String): Pipelin
   }
 }
 
-function loadVar(variable: String, fileName: String): Pipeline.LoadVarStep = new Pipeline.LoadVarStep {
+function loadVar(variable: String, fileName: String): Pipeline.LoadVarStep = new Pipeline
+  .LoadVarStep {
   load_var = variable
   file = fileName
 }
 
-function loadVarJson(variable: String, fileName: String): Pipeline.LoadVarStep = new Pipeline.LoadVarStep {
+function loadVarJson(variable: String, fileName: String): Pipeline.LoadVarStep = new Pipeline
+  .LoadVarStep {
   load_var = variable
   file = fileName
   format = "json"
@@ -163,12 +180,14 @@ class AssumeRunCodeBuildRoleStep extends Pipeline.TaskStep {
     ["assume-role"] = "run-codebuild-assume-role"
   }
   params {
-    ["AWS_ROLE_ARN"] = "arn:aws:iam::((pay_aws_test_account_id)):role/pay-cd-pay-dev-codebuild-builder-test-12"
+    ["AWS_ROLE_ARN"] =
+      "arn:aws:iam::((pay_aws_test_account_id)):role/pay-cd-pay-dev-codebuild-builder-test-12"
     ["AWS_ROLE_SESSION_NAME"] = session_name
   }
 }
 
-LoadRunCodeBuildAssumedRoleVar: Pipeline.LoadVarStep = loadVarJson("role", "run-codebuild-assume-role/assume-role.json")
+LoadRunCodeBuildAssumedRoleVar: Pipeline.LoadVarStep =
+  loadVarJson("role", "run-codebuild-assume-role/assume-role.json")
 
 class ParseGithubAlphaReleaseTagTask extends Pipeline.TaskStep {
   hidden gitRelease: String
@@ -216,7 +235,6 @@ class AssumeConcourseRoleTask extends Pipeline.TaskStep {
     ["AWS_ROLE_SESSION_NAME"] = session_name
   }
 }
-
 function buildImage(taskName: String, context: String): Pipeline.TaskStep = new {
   task = taskName
   privileged = true

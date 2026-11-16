@@ -1,10 +1,12 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
-import "../common/PayResources.pkl"
 
 resource_types {
   shared_resources.pullRequestResourceType
@@ -131,7 +133,11 @@ local function getStepWithDepth(resource: String, depth: Int): GetStep = new {
   }
 }
 
-local function putPRTestStatus(resourceName: String, testName: String, status: String): Pipeline.PutStep = new {
+local function putPRTestStatus(
+  resourceName: String,
+  testName: String,
+  status: String,
+): Pipeline.PutStep = new {
   put = resourceName
   params {
     ["path"] = resourceName
@@ -166,7 +172,11 @@ local class TestConcourseRunnerTask extends Pipeline.TaskStep {
   }
 }
 
-local function buildAndPushConcourseJob(javaVersionSuffix: String, sampleRepo: String, runTests: Boolean): Pipeline.Job = new {
+local function buildAndPushConcourseJob(
+  javaVersionSuffix: String,
+  sampleRepo: String,
+  runTests: Boolean,
+): Pipeline.Job = new {
   local baseName = "concourse-runner\(javaVersionSuffix)"
 
   name = "build-and-push-\(baseName)"

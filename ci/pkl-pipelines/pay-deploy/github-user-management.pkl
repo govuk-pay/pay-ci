@@ -16,7 +16,10 @@ local function sharedSteps(configuration_path: String) = new Listing<Step> {
   new InParallelStep {
     in_parallel = new Listing<Step> {
       shared_resources_for_github_management.doAssumeRole("github-user-management")
-      shared_resources_for_github_management.doLoadTerraformVersion(configuration_path, terraform_subpath)
+      shared_resources_for_github_management.doLoadTerraformVersion(
+        configuration_path,
+        terraform_subpath,
+      )
       new TaskStep {
         task = "generate-csvs"
         config {

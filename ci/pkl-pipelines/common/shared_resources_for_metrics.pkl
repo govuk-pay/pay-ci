@@ -1,4 +1,5 @@
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
 prometheusPushgatewayResourceType = new Pipeline.ResourceType {
   name = "prometheus-pushgateway"
@@ -26,16 +27,17 @@ function paySendAppReleaseMetric(success: Boolean, environment: String): Pipelin
     ["metric"] = "deployment_pipeline_app_release_number"
     ["value"] = "((.:app_release_number))"
     when (success == true) {
-      ["job"] = "deployment_pipeline_app_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/outcome/success"
+      ["job"] =
+        "deployment_pipeline_app_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/outcome/success"
     } else {
-      ["job"] = "deployment_pipeline_app_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/outcome/failure"
+      ["job"] =
+        "deployment_pipeline_app_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/outcome/failure"
     }
     ["labels"] = new Mapping {
       ...getPushGatewayDefaultLabels(environment)
       when (success == true) {
         ["outcome"] = "success"
-      }
-      else {
+      } else {
         ["outcome"] = "failure"
       }
     }
@@ -50,16 +52,17 @@ function paySendAdotReleaseMetric(success: Boolean, environment: String): Pipeli
     ["metric"] = "deployment_pipeline_sidecar_release_number"
     ["value"] = "((.:adot_release_number))"
     when (success == true) {
-      ["job"] = "deployment_pipeline_sidecar_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/sidecar/adot/outcome/success"
+      ["job"] =
+        "deployment_pipeline_sidecar_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/sidecar/adot/outcome/success"
     } else {
-      ["job"] = "deployment_pipeline_sidecar_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/sidecar/adot/outcome/failure"
+      ["job"] =
+        "deployment_pipeline_sidecar_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/sidecar/adot/outcome/failure"
     }
     ["labels"] = new Mapping {
       ...getPushGatewayDefaultLabels(environment)
       when (success == true) {
         ["outcome"] = "success"
-      }
-      else {
+      } else {
         ["outcome"] = "failure"
       }
       ["sidecar"] = "adot"
@@ -75,16 +78,17 @@ function paySendNginxReleaseMetric(success: Boolean, environment: String): Pipel
     ["metric"] = "deployment_pipeline_sidecar_release_number"
     ["value"] = "((.:nginx_release_number))"
     when (success == true) {
-      ["job"] = "deployment_pipeline_sidecar_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/sidecar/nginx/outcome/success"
+      ["job"] =
+        "deployment_pipeline_sidecar_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/sidecar/nginx/outcome/success"
     } else {
-      ["job"] = "deployment_pipeline_sidecar_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/sidecar/nginx/outcome/failure"
+      ["job"] =
+        "deployment_pipeline_sidecar_release_number/pipeline/$BUILD_PIPELINE_NAME/concourse_job/$BUILD_JOB_NAME/app/((.:app_name))/sidecar/nginx/outcome/failure"
     }
     ["labels"] = new Mapping {
       ...getPushGatewayDefaultLabels(environment)
       when (success == true) {
         ["outcome"] = "success"
-      }
-      else {
+      } else {
         ["outcome"] = "failure"
       }
       ["sidecar"] = "nginx"
@@ -92,7 +96,7 @@ function paySendNginxReleaseMetric(success: Boolean, environment: String): Pipel
   }
 }
 
-local function getPushGatewayDefaultLabels (environment: String) = new Mapping {
+local function getPushGatewayDefaultLabels(environment: String) = new Mapping {
   ["pipeline"] = "$BUILD_PIPELINE_NAME"
   ["concourse_job"] = "$BUILD_JOB_NAME"
   ["app"] = "((.:app_name))"

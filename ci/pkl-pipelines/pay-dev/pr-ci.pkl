@@ -1,36 +1,40 @@
-amends "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
-import "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+amends
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
 
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/Pipeline.pkl"
+import
+  "package://pkg.pkl-lang.org/github.com/govuk-pay/pkl-concourse-pipeline/pkl-concourse-pipeline@0.0.4#/TaskConfig.pkl"
+
+import "../common/PayResources.pkl"
 import "../common/pipeline_self_update.pkl"
 import "../common/shared_resources.pkl"
-import "../common/shared_resources_for_test_pipelines.pkl" as shared_test
 import "../common/shared_resources_for_multi_arch_builds.pkl" as shared_multiarch_build
-import "../common/PayResources.pkl"
+import "../common/shared_resources_for_test_pipelines.pkl" as shared_test
 
 local e2e_test_apps = new Mapping<String, AppConfig> {
   ["adminusers"] = new { tests = new { "card" } }
   ["aws-bastion"] = new { tests = new {} }
-  ["cardid"] = new { tests = new { "card" "zap" } }
-  ["connector"] = new { tests = new {"card" }; migrate_from = "card-connector" }
-  ["endtoend"] = new { tests = new {"card" "products"} }
-  ["endtoend-zap"] = new { tests = new {"zap"} }
-  ["frontend"] = new { tests = new {"card" "products" "zap"}; migrate_from = "card-frontend" }
+  ["cardid"] = new { tests = new { "card"; "zap" } }
+  ["connector"] = new { tests = new { "card" }; migrate_from = "card-connector" }
+  ["endtoend"] = new { tests = new { "card"; "products" } }
+  ["endtoend-zap"] = new { tests = new { "zap" } }
+  ["frontend"] = new { tests = new { "card"; "products"; "zap" }; migrate_from = "card-frontend" }
   ["ledger"] = new { tests = new { "card" } }
   ["products"] = new { tests = new { "products" } }
   ["products-ui"] = new { tests = new { "products" } }
-  ["publicapi"] = new { tests = new {"card" "products" "zap"} }
-  ["publicauth"] = new { tests = new { "card" "zap" } }
-  ["selfservice"] = new { tests = new { "card" "products" } }
+  ["publicapi"] = new { tests = new { "card"; "products"; "zap" } }
+  ["publicauth"] = new { tests = new { "card"; "zap" } }
+  ["selfservice"] = new { tests = new { "card"; "products" } }
 } // pay-ci-endtoend-config is different enough to break out
 
-local groupMap = new Mapping <String, Listing<String>> {
+local groupMap = new Mapping<String, Listing<String>> {
   ["adminusers"] = new { "adminusers-e2e" }
   ["aws-bastion"] = new { "aws-bastion-e2e" }
   ["cardid"] = new { "cardid-e2e" }
   ["connector"] = new { "connector-e2e" }
-  ["end_to_end"] = new { "endtoend-e2e" "pay-ci-endtoend-config" }
-  ["end_to_end-zap"] = new { "endtoend-zap-e2e" "pay-ci-endtoend-config" }
+  ["end_to_end"] = new { "endtoend-e2e"; "pay-ci-endtoend-config" }
+  ["end_to_end-zap"] = new { "endtoend-zap-e2e"; "pay-ci-endtoend-config" }
   ["frontend"] = new { "frontend-e2e" }
   ["ledger"] = new { "ledger-e2e" }
   ["products"] = new { "products-e2e" }
@@ -48,7 +52,9 @@ local class AppConfig {
 }
 
 groups {
-  for (groupName, groupJobs in groupMap) { new Pipeline.Group { name = groupName jobs = groupJobs } }
+  for (groupName, groupJobs in groupMap) {
+    new Pipeline.Group { name = groupName; jobs = groupJobs }
+  }
 }
 
 resource_types {
@@ -81,7 +87,7 @@ resources = new {
   new PayResources.PayGitHubPullRequestResource {
     name = "ci-pull-request"
     repo = "pay-ci"
-    source { ["paths"] = new Listing<String> { "ci/pipelines/*"  "ci/tasks/*"} }
+    source { ["paths"] = new Listing<String> { "ci/pipelines/*"; "ci/tasks/*" } }
   }
   new Pipeline.Resource {
     name = "pull-request-builds-ecr"
@@ -205,12 +211,12 @@ local function e2eJobForBastion() = new Job {
       }
     }
 
-    ...shared_multiarch_build.multiArchCandidateBuild(
-      new shared_multiarch_build.ImageToMultiArchBuild {
-        name = "aws-bastion"
-        ecr_repo = "govukpay/pull-request-builds"
-        branch = "((.:release-sha))"
-        push_to_docker_hub = false
+    ...shared_multiarch_build.multiArchCandidateBuild(new shared_multiarch_build
+      .ImageToMultiArchBuild {
+      name = "aws-bastion"
+      ecr_repo = "govukpay/pull-request-builds"
+      branch = "((.:release-sha))"
+      push_to_docker_hub = false
     })
 
     new TaskStep {
@@ -235,7 +241,8 @@ local function e2eJobForBastion() = new Job {
         ["pay-cli"] = "pay-cli-src"
       }
       params {
-        ["ECR_REPO"] = "((pay_aws_test_account_id)).dkr.ecr.eu-west-1.amazonaws.com/govukpay/pull-request-builds"
+        ["ECR_REPO"] =
+          "((pay_aws_test_account_id)).dkr.ecr.eu-west-1.amazonaws.com/govukpay/pull-request-builds"
         ["IMAGE_TAG"] = "((.:image-tag))"
         ["AWS_DEFAULT_REGION"] = "eu-west-1"
         ["AWS_ACCESS_KEY_ID"] = "((.:concourse_role.AWS_ACCESS_KEY_ID))"
@@ -246,7 +253,6 @@ local function e2eJobForBastion() = new Job {
 
     putStatus("aws-bastion-pull-request", "e2e tests", "success")
   }
-
 }
 
 local function e2eJob(app: String, config: AppConfig) = new Job {
@@ -321,7 +327,7 @@ local function e2eJob(app: String, config: AppConfig) = new Job {
           }
         }
         shared_test.prepareCodeBuild(app, "prepare-e2e-codebuild.yml", "((.:image_tag))")
-        |> shared_test.withParam("PR_BUILD", "true")
+          |> shared_test.withParam("PR_BUILD", "true")
       }
     }
     when (config.tests.length > 1) {
