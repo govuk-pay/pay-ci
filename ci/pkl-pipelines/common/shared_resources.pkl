@@ -216,3 +216,27 @@ class AssumeConcourseRoleTask extends Pipeline.TaskStep {
     ["AWS_ROLE_SESSION_NAME"] = session_name
   }
 }
+
+function buildImage(taskName: String, context: String): Pipeline.TaskStep = new {
+  task = taskName
+  privileged = true
+  params {
+    ["CONTEXT"] = context
+    ["DOCKER_CONFIG"] = "docker_creds"
+  }
+  config {
+    platform = "linux"
+    image_resource {
+      type = "registry-image"
+      source { ["repository"] = "concourse/oci-build-task" }
+    }
+    inputs = new Listing {
+      new TaskConfig.Input { name = context }
+      new TaskConfig.Input { name = "docker_creds" }
+    }
+    outputs = new Listing {
+      new TaskConfig.Output { name = "image" }
+    }
+    run { path = "build" }
+  }
+}

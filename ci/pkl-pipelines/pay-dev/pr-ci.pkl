@@ -278,11 +278,15 @@ local function e2eJob(app: String, config: AppConfig) = new Job {
 
     shared_resources.generateDockerCredsConfigStep
 
-    new TaskStep {
-      task = "build-image"
-      file = "pay-ci/ci/tasks/build-docker-image.yml"
-      privileged = true
-      params = new { ["app_name"] = app }
+    when (app == "products-ui") {
+      shared_resources.buildImage("build-image", "src")
+    } else {
+      new TaskStep {
+        task = "build-image"
+        file = "pay-ci/ci/tasks/build-docker-image.yml"
+        privileged = true
+        params = new { ["app_name"] = app }
+      }
     }
 
     new InParallelStep {
@@ -298,7 +302,7 @@ local function e2eJob(app: String, config: AppConfig) = new Job {
     new InParallelStep {
       in_parallel = new Listing<Step> {
         shared_test.loadVar("role", "assume-role/assume-role.json")
-        shared_test.loadVar("image_filename", "image_info/image_filename")
+        shared_test.loadVar("image_filename", "image_info/image_filename") //This will be incorrect for the new oci build task
         shared_test.loadVar("image_tag", "image_info/tag")
       }
     }
@@ -309,7 +313,11 @@ local function e2eJob(app: String, config: AppConfig) = new Job {
           get_params = new { ["skip_download"] = true }
           params = new {
             ["additional_tags"] = "image_info/tag"
-            ["image"] = "local_image/((.:image_filename))"
+            when (app == "products-ui") {
+              ["image"] = "image/image.tar"
+            } else {
+              ["image"] = "local_image/((.:image_filename))"
+            }
           }
         }
         shared_test.prepareCodeBuild(app, "prepare-e2e-codebuild.yml", "((.:image_tag))")
