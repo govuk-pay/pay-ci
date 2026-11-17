@@ -278,16 +278,7 @@ local function e2eJob(app: String, config: AppConfig) = new Job {
 
     shared_resources.generateDockerCredsConfigStep
 
-    when (app == "products-ui") {
-      shared_resources.buildImage("build-image", "src")
-    } else {
-      new TaskStep {
-        task = "build-image"
-        file = "pay-ci/ci/tasks/build-docker-image.yml"
-        privileged = true
-        params = new { ["app_name"] = app }
-      }
-    }
+    shared_resources.buildImage("build-image", "src")
 
     new InParallelStep {
       in_parallel = new Listing<Step> {
@@ -313,11 +304,7 @@ local function e2eJob(app: String, config: AppConfig) = new Job {
           get_params = new { ["skip_download"] = true }
           params = new {
             ["additional_tags"] = "image_info/tag"
-            when (app == "products-ui") {
-              ["image"] = "image/image.tar"
-            } else {
-              ["image"] = "local_image/((.:image_filename))"
-            }
+            ["image"] = "image/image.tar"
           }
         }
         shared_test.prepareCodeBuild(app, "prepare-e2e-codebuild.yml", "((.:image_tag))")
