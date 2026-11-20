@@ -235,6 +235,7 @@ class AssumeConcourseRoleTask extends Pipeline.TaskStep {
     ["AWS_ROLE_SESSION_NAME"] = session_name
   }
 }
+
 function buildImage(taskName: String, context: String): Pipeline.TaskStep = new {
   task = taskName
   privileged = true
@@ -256,5 +257,95 @@ function buildImage(taskName: String, context: String): Pipeline.TaskStep = new 
       new TaskConfig.Output { name = "image" }
     }
     run { path = "build" }
+  }
+}
+
+function copyMultiarchImageResources(
+  repoName: String,
+  releaseNumber: String,
+  sourceAccessKeyID: String,
+  sourceSecretAccessKey: String,
+  sourceSessionToken: String,
+  destinationAccessKeyID: String,
+  destinationSecretAccessKey: String,
+  destinationSessionToken: String,
+  sourceResourceName: String,
+  destinationResourceName: String,
+): Listing = new {
+  new Pipeline.Resource {
+    name = sourceResourceName
+    type = "registry-image"
+    source = new {
+      ["repository"] = repoName
+      ["aws_access_key_id"] = sourceAccessKeyID
+      ["aws_secret_access_key"] = sourceSecretAccessKey
+      ["aws_session_token"] = sourceSessionToken
+      ["aws_region"] = "eu-west-1"
+      ["semver_constraint"] = releaseNumber
+      ["pre_releases"] = true
+      ["pre_release_prefixes"] = new Listing {
+        "candidate-armv8"
+        "candidate-amd64"
+      }
+    }
+  }
+  new Pipeline.Resource {
+    name = destinationResourceName
+    type = "registry-image"
+    source = new {
+      ["repository"] = repoName
+      ["aws_access_key_id"] = destinationAccessKeyID
+      ["aws_secret_access_key"] = destinationSecretAccessKey
+      ["aws_session_token"] = destinationSessionToken
+      ["aws_region"] = "eu-west-1"
+      ["semver_constraint"] = releaseNumber
+      ["pre_releases"] = true
+      ["pre_release_prefixes"] = new Listing {
+        "candidate-armv8"
+        "candidate-amd64"
+      }
+    }
+  }
+}
+
+function copyMultiarchImageToOtherAccount(
+  fromAccountResource: String,
+  toAccountResource: String,
+): Listing = new {
+  new Pipeline.GetStep {
+    get = fromAccountResource
+
+    params {
+      ["format"] = "oci"
+      ["platform"] = new Mapping {
+        ["architecture"] = "armv8"
+      }
+    }
+  }
+  new Pipeline.PutStep {
+    put = toAccountResource
+
+    params {
+      ["image"] = "\(fromAccountResource)/image.tar"
+      ["additional_tags"] = "\(fromAccountResource)/tag"
+    }
+  }
+  new Pipeline.GetStep {
+    get = fromAccountResource
+
+    params {
+      ["format"] = "oci"
+      ["platform"] = new Mapping {
+        ["architecture"] = "amd64"
+      }
+    }
+  }
+  new Pipeline.PutStep {
+    put = toAccountResource
+
+    params {
+      ["image"] = "\(fromAccountResource)/image.tar"
+      ["additional_tags"] = "\(fromAccountResource)/tag"
+    }
   }
 }
