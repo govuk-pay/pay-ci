@@ -260,6 +260,19 @@ function buildImage(taskName: String, context: String): Pipeline.TaskStep = new 
   }
 }
 
+function copyFetchedMultiarchImageToOtherAccount(
+  fromAccountResource: String,
+  toAccountResource: String,
+  version: String,
+) = new Pipeline.PutStep {
+  put = toAccountResource
+
+  params {
+    ["image"] = "\(fromAccountResource)/oci"
+    ["version"] = version
+  }
+}
+
 function copyMultiarchImageToOtherAccount(
   fromAccountResource: String,
   toAccountResource: String,
@@ -272,12 +285,5 @@ function copyMultiarchImageToOtherAccount(
       ["format"] = "oci-layout"
     }
   }
-  new Pipeline.PutStep {
-    put = toAccountResource
-
-    params {
-      ["image"] = "\(fromAccountResource)/oci"
-      ["version"] = version
-    }
-  }
+  copyFetchedMultiarchImageToOtherAccount(fromAccountResource, toAccountResource, version)
 }
