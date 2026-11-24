@@ -34,6 +34,12 @@ resources = new {
     "pay_aws_staging_account_id",
     "release",
   )
+  shared_resources.payECRResourceWithVariant(
+    "adot-ecr-registry-deploy",
+    "govukpay/adot",
+    "pay_aws_deploy_account_id",
+    "release",
+  )
   shared_resources.payDockerHubResource(
     "prometheus-pushgateway-resource-dockerhub",
     "governmentdigitalservice/pay-prometheus-pushgateway-resource",
@@ -86,7 +92,11 @@ jobs = new {
         "write-to-deploy-ecr-role",
         "assume-write-to-ecr-deploy-role/assume-role.json",
       )
-      copyAdotToDeploy()
+      ...shared_resources.copyMultiarchImageToOtherAccount(
+        "adot-ecr-registry-staging",
+        "adot-ecr-registry-deploy",
+        "((.:release_number))",
+      )
     }
   }
   new {
@@ -217,24 +227,6 @@ local function asArm() = new Mixin {
       ["architecture"] = "arm64"
       ["os"] = "linux"
     }
-  }
-}
-
-local function copyAdotToDeploy(): TaskStep = new TaskStep {
-  task = "copy-adot-to-deploy"
-  file = "pay-ci/ci/tasks/copy-multiarch-image-to-other-account.yml"
-  privileged = true
-  params {
-    ["ECR_REPO_NAME"] = "govukpay/adot"
-    ["RELEASE_NUMBER"] = "((.:release_number))"
-    ["SOURCE_ECR_REGISTRY"] = "((pay_aws_staging_account_id)).dkr.ecr.eu-west-1.amazonaws.com"
-    ["DESTINATION_ECR_REGISTRY"] = "((pay_aws_deploy_account_id)).dkr.ecr.eu-west-1.amazonaws.com"
-    ["SOURCE_AWS_ACCESS_KEY_ID"] = "((.:copy-from-staging-ecr-role.AWS_ACCESS_KEY_ID))"
-    ["SOURCE_AWS_SECRET_ACCESS_KEY"] = "((.:copy-from-staging-ecr-role.AWS_SECRET_ACCESS_KEY))"
-    ["SOURCE_AWS_SESSION_TOKEN"] = "((.:copy-from-staging-ecr-role.AWS_SESSION_TOKEN))"
-    ["DESTINATION_AWS_ACCESS_KEY_ID"] = "((.:write-to-deploy-ecr-role.AWS_ACCESS_KEY_ID))"
-    ["DESTINATION_AWS_SECRET_ACCESS_KEY"] = "((.:write-to-deploy-ecr-role.AWS_SECRET_ACCESS_KEY))"
-    ["DESTINATION_AWS_SESSION_TOKEN"] = "((.:write-to-deploy-ecr-role.AWS_SESSION_TOKEN))"
   }
 }
 

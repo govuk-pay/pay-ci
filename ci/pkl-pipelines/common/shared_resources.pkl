@@ -235,6 +235,7 @@ class AssumeConcourseRoleTask extends Pipeline.TaskStep {
     ["AWS_ROLE_SESSION_NAME"] = session_name
   }
 }
+
 function buildImage(taskName: String, context: String): Pipeline.TaskStep = new {
   task = taskName
   privileged = true
@@ -256,5 +257,27 @@ function buildImage(taskName: String, context: String): Pipeline.TaskStep = new 
       new TaskConfig.Output { name = "image" }
     }
     run { path = "build" }
+  }
+}
+
+function copyMultiarchImageToOtherAccount(
+  fromAccountResource: String,
+  toAccountResource: String,
+  version: String,
+): Listing = new {
+  new Pipeline.GetStep {
+    get = fromAccountResource
+
+    params {
+      ["format"] = "oci-layout"
+    }
+  }
+  new Pipeline.PutStep {
+    put = toAccountResource
+
+    params {
+      ["image"] = "\(fromAccountResource)/oci"
+      ["version"] = version
+    }
   }
 }
