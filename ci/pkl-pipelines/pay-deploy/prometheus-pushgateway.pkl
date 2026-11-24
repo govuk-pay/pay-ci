@@ -76,8 +76,8 @@ jobs = new {
     plan = new {
       new InParallelStep {
         in_parallel = new Listing<Step> {
-          getStep("pay-ci", false, false)
-          getStep("adot-ecr-registry-staging", true, false)
+          getStep("pay-ci", false)
+          getStep("adot-ecr-registry-staging", true) |> withFormat("oci-layout")
         }
       }
       parseReleaseTag("adot", false)
@@ -102,7 +102,7 @@ jobs = new {
   new {
     name = "copy-prometheus-pushgateway"
     plan = new {
-      getStep("prometheus-pushgateway", true, true)
+      getStep("prometheus-pushgateway", true) |> withFormat("oci")
       putStep("ecr-prometheus-pushgateway", "prometheus-pushgateway/image.tar", "", true)
     }
     on_failure =
@@ -121,8 +121,8 @@ jobs = new {
     plan {
       new InParallelStep {
         in_parallel = new Listing<Step> {
-          getStep("prometheus-pushgateway-resource-release", true, false)
-          getStep("pay-ci", false, false)
+          getStep("prometheus-pushgateway-resource-release", true)
+          getStep("pay-ci", false)
         }
       }
       new InParallelStep {
@@ -187,15 +187,10 @@ local function loadVar(variable: String, fileName: String): LoadVarStep = new Lo
   file = fileName
 }
 
-local function getStep(resourceName: String, shouldTrigger: Boolean, isOci: Boolean): GetStep = new GetStep {
+local function getStep(resourceName: String, shouldTrigger: Boolean): GetStep = new GetStep {
   get = resourceName
   when (shouldTrigger) {
     trigger = true
-  }
-  when (isOci) {
-    params {
-      ["format"] = "oci"
-    }
   }
 }
 
@@ -271,5 +266,11 @@ local function parseReleaseTag(appName: String, includeOutputMapping: Boolean) =
     output_mapping = new {
       ["ecr-release-info"] = "\(releaseInfoPrefix)-release-info"
     }
+  }
+}
+
+local function withFormat(format: String): Mixin<GetStep> = new {
+  params {
+    ["format"] = format
   }
 }
