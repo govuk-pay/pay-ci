@@ -806,7 +806,6 @@ local function getJobToPushImageToStaging(app): Job = new {
     shared_resources.copyFetchedMultiarchImageToOtherAccount(
       "\(app.name)-ecr-registry-test",
       "\(app.name)-ecr-registry-staging",
-      "((.:release_number))",
     )
   }
   on_success = shared_resources_for_metrics.paySendAppReleaseMetric(true, "test-12")
