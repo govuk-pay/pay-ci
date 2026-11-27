@@ -95,6 +95,7 @@ jobs = new {
       shared_resources.copyFetchedMultiarchImageToOtherAccount(
         "adot-ecr-registry-staging",
         "adot-ecr-registry-deploy",
+        "((.:release_number))",
       )
     }
   }

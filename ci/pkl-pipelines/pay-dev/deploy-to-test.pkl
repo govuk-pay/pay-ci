@@ -112,13 +112,6 @@ resources = new {
       "release",
     )
 
-    shared_resources.payECRResourceWithVariant(
-      "\(app.name)-ecr-registry-staging",
-      app.getECRRepo(),
-      "pay_aws_staging_account_id",
-      "release",
-    )
-
     when (
       getTestEnvConfig(app.name).run_e2e_tests || getTestEnvConfig(app.name).run_integration_tests
     ) {
@@ -740,7 +733,8 @@ local function getJobToPushImageToStaging(app): Job = new {
           new GetStep {
             get = "\(app.name)-ecr-registry-test"
             params {
-              ["format"] = "oci-layout"
+              ["skip_download"] = true
+              ["format"] = "oci"
             }
             trigger = true
             passed {
@@ -803,10 +797,7 @@ local function getJobToPushImageToStaging(app): Job = new {
       }
     }
 
-    shared_resources.copyFetchedMultiarchImageToOtherAccount(
-      "\(app.name)-ecr-registry-test",
-      "\(app.name)-ecr-registry-staging",
-    )
+    copyImagesToStaging(app)
   }
   on_success = shared_resources_for_metrics.paySendAppReleaseMetric(true, "test-12")
   on_failure = shared_resources_for_metrics.paySendAppReleaseMetric(false, "test-12")
@@ -1176,6 +1167,24 @@ local function assumeWriteToStagingEcrRole(): TaskStep = new TaskStep {
   params {
     ["AWS_ROLE_ARN"] = "arn:aws:iam::((pay_aws_staging_account_id)):role/concourse"
     ["AWS_ROLE_SESSION_NAME"] = "copy-to-ecr-in-staging"
+  }
+}
+
+local function copyImagesToStaging(app: PayApp): TaskStep = new TaskStep {
+  task = "copy-images-to-staging"
+  file = "pay-ci/ci/tasks/copy-multiarch-image-to-other-account.yml"
+  privileged = true
+  params {
+    ["ECR_REPO_NAME"] = app.getECRRepo()
+    ["RELEASE_NUMBER"] = "((.:release_number))"
+    ["SOURCE_ECR_REGISTRY"] = "((pay_aws_test_account_id)).dkr.ecr.eu-west-1.amazonaws.com"
+    ["DESTINATION_ECR_REGISTRY"] = "((pay_aws_staging_account_id)).dkr.ecr.eu-west-1.amazonaws.com"
+    ["SOURCE_AWS_ACCESS_KEY_ID"] = "((.:copy-from-test-ecr-role.AWS_ACCESS_KEY_ID))"
+    ["SOURCE_AWS_SECRET_ACCESS_KEY"] = "((.:copy-from-test-ecr-role.AWS_SECRET_ACCESS_KEY))"
+    ["SOURCE_AWS_SESSION_TOKEN"] = "((.:copy-from-test-ecr-role.AWS_SESSION_TOKEN))"
+    ["DESTINATION_AWS_ACCESS_KEY_ID"] = "((.:write-to-staging-ecr-role.AWS_ACCESS_KEY_ID))"
+    ["DESTINATION_AWS_SECRET_ACCESS_KEY"] = "((.:write-to-staging-ecr-role.AWS_SECRET_ACCESS_KEY))"
+    ["DESTINATION_AWS_SESSION_TOKEN"] = "((.:write-to-staging-ecr-role.AWS_SESSION_TOKEN))"
   }
 }
 
